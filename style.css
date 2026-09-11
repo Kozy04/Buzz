@@ -514,6 +514,51 @@ body {
   margin-bottom: 16px;
 }
 
+/* Template Header & AI Magic Button */
+.template-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.btn-ai-magic {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.15) 0%, rgba(139, 92, 246, 0.25) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: var(--accent-cyan);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.btn-ai-magic:active {
+  transform: scale(0.95);
+  background: var(--accent-cyan);
+  color: #08080A;
+}
+
+.btn-ai-magic.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.ai-sparkle {
+  font-size: 13px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+}
+
 /* Template Selector Pills */
 .template-selector {
   display: flex;

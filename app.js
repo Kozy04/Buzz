@@ -117,7 +117,8 @@ let activeLead = null;
 let activeTemplate = "receipt";
 let settings = {
   senderName: "Founder, SmartRename AI",
-  productUrl: "https://smartrenameai.online"
+  productUrl: "https://smartrenameai.online",
+  geminiApiKey: "AIzaSyDomMXLi9JjVyvWoMQuNRu3QwsyXjQPQqc"
 };
 
 // Templates
@@ -215,6 +216,7 @@ function loadData() {
   }
   document.getElementById("settingsSenderName").value = settings.senderName;
   document.getElementById("settingsProductUrl").value = settings.productUrl;
+  document.getElementById("settingsGeminiKey").value = settings.geminiApiKey || "";
 }
 
 function saveData() {
@@ -225,6 +227,7 @@ function saveData() {
 function saveSettings() {
   settings.senderName = document.getElementById("settingsSenderName").value.trim() || "Founder, SmartRename AI";
   settings.productUrl = document.getElementById("settingsProductUrl").value.trim() || "https://smartrenameai.online";
+  settings.geminiApiKey = document.getElementById("settingsGeminiKey").value.trim() || "AIzaSyDomMXLi9JjVyvWoMQuNRu3QwsyXjQPQqc";
   localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
   showToast("Settings saved");
 }
@@ -383,6 +386,97 @@ function updateDrafterContent() {
   const tmpl = TEMPLATES[activeTemplate] || TEMPLATES.receipt;
   document.getElementById("drafterSubject").value = tmpl.getSubject(activeLead);
   document.getElementById("drafterBody").value = tmpl.getBody(activeLead);
+}
+
+// Generate with Google Gemini AI
+async function generateWithGemini() {
+  if (!activeLead) return;
+
+  const apiKey = settings.geminiApiKey || "AIzaSyDomMXLi9JjVyvWoMQuNRu3QwsyXjQPQqc";
+  if (!apiKey) {
+    showToast("Please enter a Gemini API Key in Settings");
+    return;
+  }
+
+  const aiBtn = document.getElementById("btnAiDraft");
+  const aiBtnText = document.getElementById("aiBtnText");
+  const originalText = aiBtnText.textContent;
+
+  aiBtn.classList.add("loading");
+  aiBtnText.textContent = "AI Drafting...";
+
+  const promptText = `You are an elite B2B cold email copywriter. Write a concise, hyper-personalized, non-spammy cold outreach email from "${settings.senderName}" to "${activeLead.firstName}" at "${activeLead.firmName}".
+
+Target Info:
+- Firm: ${activeLead.firmName}
+- Contact: ${activeLead.firstName}
+- Location: ${activeLead.location || "USA"}
+- Context / Observation: ${activeLead.personalHook}
+
+Our Software: SmartRename AI (${settings.productUrl})
+What it solves: It uses multi-modal OCR and Vision AI to read vendor names, invoice dates, and amounts directly from inside chaotic scanned receipts and PDFs (like scan_0042.pdf or iPhone photos). It automatically standardizes their filenames and builds client/year folder structures in one batch.
+
+The Offer: Offer to process 15-20 of their messiest sample client receipts or PDFs for free in 5 minutes so they can see the accuracy on their own files.
+
+Strict Rules:
+- Keep the email body under 85 words.
+- NO cheesy AI clichés (no "hope this email finds you well", no "in today's fast-paced digital world", no "supercharge your workflow").
+- Sound like a busy software founder reaching out peer-to-peer.
+- Output strictly in this exact format:
+SUBJECT: [short lowercase subject]
+BODY:
+[complete email body]`;
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [{ text: promptText }]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 350
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (candidateText) {
+      const subjectMatch = candidateText.match(/SUBJECT:\s*(.*?)(?:\n|$)/i);
+      const bodyMatch = candidateText.match(/BODY:\s*([\s\S]*)/i);
+
+      if (subjectMatch && subjectMatch[1]) {
+        document.getElementById("drafterSubject").value = subjectMatch[1].trim();
+      }
+      if (bodyMatch && bodyMatch[1]) {
+        document.getElementById("drafterBody").value = bodyMatch[1].trim();
+      } else {
+        document.getElementById("drafterBody").value = candidateText.trim();
+      }
+
+      showToast("Drafted with Gemini 2.5 Flash ✨");
+    } else {
+      throw new Error("Empty AI response");
+    }
+  } catch (err) {
+    console.error("Gemini Generation Error:", err);
+    showToast("AI drafting failed. Check API key.");
+  } finally {
+    aiBtn.classList.remove("loading");
+    aiBtnText.textContent = originalText;
+  }
 }
 
 function updateDrafterStatusPills(status) {
@@ -661,6 +755,7 @@ function setupEventListeners() {
   document.getElementById("btnCloseDrafter").addEventListener("click", closeDrafter);
   document.getElementById("btnLaunchMail").addEventListener("click", launchMailApp);
   document.getElementById("btnCopyEmail").addEventListener("click", copyEmailToClipboard);
+  document.getElementById("btnAiDraft").addEventListener("click", generateWithGemini);
 
   // Template pills
   document.querySelectorAll(".template-pill").forEach(pill => {
@@ -692,6 +787,7 @@ function setupEventListeners() {
   document.getElementById("btnCloseSettings").addEventListener("click", closeSettingsModal);
   document.getElementById("settingsSenderName").addEventListener("change", saveSettings);
   document.getElementById("settingsProductUrl").addEventListener("change", saveSettings);
+  document.getElementById("settingsGeminiKey").addEventListener("change", saveSettings);
   document.getElementById("btnExportData").addEventListener("click", exportData);
   document.getElementById("inputImportFile").addEventListener("change", importData);
   document.getElementById("btnResetDefaults").addEventListener("click", resetToDefaults);

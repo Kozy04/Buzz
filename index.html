@@ -130,8 +130,14 @@
       </div>
 
       <div class="modal-body">
-        <!-- Template Switcher Pills -->
-        <label class="input-label">Outreach Template</label>
+        <!-- Template Switcher Pills & AI Button -->
+        <div class="template-header-row">
+          <label class="input-label">Outreach Template</label>
+          <button id="btnAiDraft" class="btn-ai-magic" title="Draft personalized email with Gemini AI">
+            <span class="ai-sparkle">✨</span>
+            <span id="aiBtnText">AI Smart Draft</span>
+          </button>
+        </div>
         <div class="template-selector">
           <button class="template-pill active" data-template="receipt">Receipt Hook</button>
           <button class="template-pill" data-template="cpa">CPA Document Hook</button>
@@ -252,6 +258,14 @@
         <div class="settings-group">
           <label class="input-label" for="settingsProductUrl">SmartRename AI Product URL</label>
           <input type="text" id="settingsProductUrl" class="text-input" value="https://smartrenameai.online" />
+        </div>
+
+        <div class="settings-group">
+          <div class="body-label-row" style="margin-top: 0; margin-bottom: 6px;">
+            <label class="input-label" for="settingsGeminiKey" style="margin-bottom: 0;">Google Gemini API Key</label>
+            <span class="auto-hint">Google AI Studio</span>
+          </div>
+          <input type="password" id="settingsGeminiKey" class="text-input" placeholder="AIzaSy..." />
         </div>
 
         <hr class="settings-divider" />
