@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Buzz — SmartRename AI Outreach</title>
+  
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#08080A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Buzz">
+  <link rel="apple-touch-icon" href="./icon.svg">
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <!-- App Container -->
+  <div id="app" class="app-container">
+    
+    <!-- Top App Bar -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="url(#boltGrad)" stroke="none"></polygon>
+            <defs>
+              <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#00F0FF"></stop>
+                <stop offset="100%" stop-color="#7000FF"></stop>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Buzz <span class="badge-mini">Outreach</span></h1>
+          <p class="brand-sub">SmartRename AI Pipeline</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btnSettings" class="icon-btn" title="Settings & Data">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Pipeline KPI Metrics -->
+    <section class="kpi-grid">
+      <div class="kpi-card" data-filter="all">
+        <span class="kpi-label">TOTAL LEADS</span>
+        <span id="kpiTotal" class="kpi-val">10</span>
+      </div>
+      <div class="kpi-card" data-filter="contacted">
+        <span class="kpi-label">CONTACTED</span>
+        <span id="kpiContacted" class="kpi-val kpi-cyan">0</span>
+      </div>
+      <div class="kpi-card" data-filter="sample">
+        <span class="kpi-label">SAMPLE SENT</span>
+        <span id="kpiSample" class="kpi-val kpi-purple">0</span>
+      </div>
+      <div class="kpi-card" data-filter="won">
+        <span class="kpi-label">WON / PAID</span>
+        <span id="kpiWon" class="kpi-val kpi-emerald">0</span>
+      </div>
+    </section>
+
+    <!-- Controls: Search & Filter Tabs -->
+    <section class="controls-section">
+      <div class="search-box">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Search by firm, name, or city..." />
+        <button id="btnClearSearch" class="clear-btn" style="display: none;">&times;</button>
+      </div>
+
+      <!-- Filter Scroll Strip -->
+      <div class="filter-strip">
+        <button class="filter-chip active" data-filter="all">All (<span id="countAll">10</span>)</button>
+        <button class="filter-chip" data-filter="pending">Pending (<span id="countPending">10</span>)</button>
+        <button class="filter-chip" data-filter="contacted">Contacted (<span id="countContacted">0</span>)</button>
+        <button class="filter-chip" data-filter="sample">Sample Sent (<span id="countSample">0</span>)</button>
+        <button class="filter-chip" data-filter="won">Won ($) (<span id="countWon">0</span>)</button>
+      </div>
+    </section>
+
+    <!-- Leads Feed -->
+    <main class="leads-container">
+      <div id="leadsList" class="leads-list">
+        <!-- Injected via JavaScript -->
+      </div>
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <div class="empty-icon">📂</div>
+        <h3>No Prospects Found</h3>
+        <p>Try clearing your search or add a new lead below.</p>
+      </div>
+    </main>
+
+    <!-- Bottom Action Bar / Floating Action Button -->
+    <div class="fab-wrapper">
+      <button id="btnAddLead" class="btn-fab" title="Add New Lead">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Add Lead</span>
+      </button>
+    </div>
+
+  </div> <!-- End App Container -->
+
+  <!-- Modal 1: Email Drafter & Dispatcher -->
+  <div id="modalDrafter" class="modal-overlay" style="display: none;">
+    <div class="modal-sheet">
+      <div class="sheet-handle"></div>
+      
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2 id="drafterTargetFirm">Email Drafter</h2>
+          <span id="drafterTargetEmail" class="email-subtext">recipient@email.com</span>
+        </div>
+        <button id="btnCloseDrafter" class="close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Template Switcher Pills -->
+        <label class="input-label">Outreach Template</label>
+        <div class="template-selector">
+          <button class="template-pill active" data-template="receipt">Receipt Hook</button>
+          <button class="template-pill" data-template="cpa">CPA Document Hook</button>
+          <button class="template-pill" data-template="followup">48h Loom Bump</button>
+        </div>
+
+        <!-- Subject Line -->
+        <label class="input-label" for="drafterSubject">Subject Line</label>
+        <input type="text" id="drafterSubject" class="text-input" />
+
+        <!-- Email Body -->
+        <div class="body-label-row">
+          <label class="input-label" for="drafterBody">Personalized Email Body</label>
+          <span class="auto-hint">Auto-interpolated</span>
+        </div>
+        <textarea id="drafterBody" class="textarea-input" rows="12"></textarea>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="modal-footer">
+        <button id="btnCopyEmail" class="btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span>Copy</span>
+        </button>
+
+        <button id="btnLaunchMail" class="btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+          <span>Send via Mail App</span>
+        </button>
+      </div>
+
+      <!-- Quick Status Advancement -->
+      <div class="status-quick-bar">
+        <span class="quick-label">Set Status:</span>
+        <button class="status-pill-btn" data-set-status="pending">Pending</button>
+        <button class="status-pill-btn active-pill" data-set-status="contacted">✓ Contacted</button>
+        <button class="status-pill-btn" data-set-status="sample">Sample Sent</button>
+        <button class="status-pill-btn" data-set-status="won">Won ($)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Add / Edit Lead -->
+  <div id="modalLead" class="modal-overlay" style="display: none;">
+    <div class="modal-sheet">
+      <div class="sheet-handle"></div>
+      
+      <div class="modal-header">
+        <h2 id="leadModalTitle">Add New Prospect</h2>
+        <button id="btnCloseLeadModal" class="close-btn">&times;</button>
+      </div>
+
+      <form id="leadForm" class="modal-body">
+        <input type="hidden" id="editLeadId" value="" />
+
+        <div class="form-group">
+          <label class="input-label" for="formFirmName">Firm / Business Name *</label>
+          <input type="text" id="formFirmName" class="text-input" placeholder="e.g. Austin Bookkeeping Co." required />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="input-label" for="formFirstName">Contact First Name</label>
+            <input type="text" id="formFirstName" class="text-input" placeholder="e.g. Sarah" />
+          </div>
+          <div class="form-group">
+            <label class="input-label" for="formLocation">Location</label>
+            <input type="text" id="formLocation" class="text-input" placeholder="e.g. Austin, TX" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="input-label" for="formEmail">Direct Email Address *</label>
+          <input type="email" id="formEmail" class="text-input" placeholder="e.g. sarah@austinbooks.com" required />
+        </div>
+
+        <div class="form-group">
+          <label class="input-label" for="formWebsite">Website URL</label>
+          <input type="url" id="formWebsite" class="text-input" placeholder="https://..." />
+        </div>
+
+        <div class="form-group">
+          <label class="input-label" for="formHook">Personalized Observation / Hook</label>
+          <input type="text" id="formHook" class="text-input" placeholder="e.g. noticed your focus on restaurant client cleanups" />
+        </div>
+
+        <div class="modal-footer" style="padding: 16px 0 0 0;">
+          <button type="button" id="btnCancelLead" class="btn-secondary">Cancel</button>
+          <button type="submit" class="btn-primary">Save Prospect</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Settings & Data Management -->
+  <div id="modalSettings" class="modal-overlay" style="display: none;">
+    <div class="modal-sheet">
+      <div class="sheet-handle"></div>
+      
+      <div class="modal-header">
+        <h2>Settings & Data</h2>
+        <button id="btnCloseSettings" class="close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body settings-list">
+        <!-- Sender Profile -->
+        <div class="settings-group">
+          <label class="input-label" for="settingsSenderName">Your Name / Title</label>
+          <input type="text" id="settingsSenderName" class="text-input" value="Founder, SmartRename AI" />
+        </div>
+
+        <div class="settings-group">
+          <label class="input-label" for="settingsProductUrl">SmartRename AI Product URL</label>
+          <input type="text" id="settingsProductUrl" class="text-input" value="https://smartrenameai.online" />
+        </div>
+
+        <hr class="settings-divider" />
+
+        <!-- Data Portability -->
+        <div class="settings-actions-grid">
+          <button id="btnExportData" class="btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Export Backup (JSON)</span>
+          </button>
+
+          <label class="btn-secondary file-upload-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span>Import Backup</span>
+            <input type="file" id="inputImportFile" accept=".json" style="display: none;" />
+          </label>
+        </div>
+
+        <button id="btnResetDefaults" class="btn-danger-outline">
+          Reset to Default 10 Bookkeeper Leads
+        </button>
+
+        <div class="app-version-tag">
+          Buzz Mobile PWA v1.0.0 • Offline Ready
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast" style="display: none;">
+    <span id="toastMsg">Action completed</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="./app.js"></script>
+  <script>
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('PWA ServiceWorker registered', reg.scope))
+          .catch(err => console.log('PWA ServiceWorker error', err));
+      });
+    }
+  </script>
+</body>
+</html>

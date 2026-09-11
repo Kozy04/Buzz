@@ -1,0 +1,20 @@
+{
+  "name": "Buzz Outreach CRM",
+  "short_name": "Buzz",
+  "description": "Mobile-first client acquisition and automated cold email dispatcher for SmartRename AI",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#08080A",
+  "theme_color": "#08080A",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"]
+}

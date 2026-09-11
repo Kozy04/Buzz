@@ -1,0 +1,22 @@
+To: barmannbookkeeping@gmail.com
+Subject: receipt & invoice naming at Barmann Bookkeeping
+
+Hi Sarah,
+
+I came across Barmann Bookkeeping and noticed your boutique bookkeeping focus for hospitality and local service businesses.
+
+Quick question: during monthly close and tax prep, how much time does your team spend opening, reading, and renaming client receipts and invoices that arrive with chaotic names like "scan_0042.pdf" or iPhone photo numbers?
+
+We built SmartRename AI (https://smartrenameai.online) specifically to eliminate that manual bottleneck.
+
+Our system uses vision AI and OCR to instantly read the vendor, invoice date, and total from inside any PDF or receipt image, renames the file to your exact standard (e.g., "2026-09-11_Adobe_INV-9821_Receipt.pdf"), and automatically organizes them into client/year folder structures in one batch.
+
+Would you be open to a quick, zero-obligation test?
+
+If you send over 15-20 of your messiest sample client receipts or PDFs, I will run them through the system and send you back a cleanly standardized ZIP in 5 minutes—free of charge so you can see how it works on your own files.
+
+Best regards,
+
+Founder, SmartRename AI
+SmartRename AI
+https://smartrenameai.online

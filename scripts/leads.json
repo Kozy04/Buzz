@@ -1,0 +1,102 @@
+[
+  {
+    "id": 1,
+    "firmName": "Bald Ginger",
+    "firstName": "Ed",
+    "email": "ed@baldginger.com",
+    "location": "Austin, TX",
+    "website": "https://www.baldginger.com",
+    "personalHook": "love your hands-on approach to bookkeeping and financial strategy for Austin businesses",
+    "status": "pending"
+  },
+  {
+    "id": 2,
+    "firmName": "Hollis CPA Firm",
+    "firstName": "Cameron",
+    "email": "cameron@holliscpa.com",
+    "location": "Austin, TX",
+    "website": "https://www.holliscpa.com",
+    "personalHook": "noticed the full-service tax and bookkeeping work your team does for small businesses across the Austin area",
+    "status": "pending"
+  },
+  {
+    "id": 3,
+    "firmName": "Tapia Bookkeeping",
+    "firstName": "Diego",
+    "email": "diego@tapiabookkeeping.com",
+    "location": "Austin, TX",
+    "website": "https://www.tapiabookkeeping.com",
+    "personalHook": "saw that you specialize in QuickBooks cleanups and monthly reconciliation for small businesses",
+    "status": "pending"
+  },
+  {
+    "id": 4,
+    "firmName": "Bittel Books & Taxes",
+    "firstName": "there",
+    "email": "hello@bittelbooks.com",
+    "location": "Austin, TX",
+    "website": "https://www.bittelbooks.com",
+    "personalHook": "noticed your specialized focus on bookkeeping and tax prep for freelancers and local LLCs",
+    "status": "pending"
+  },
+  {
+    "id": 5,
+    "firmName": "Swift Bookkeeping and More",
+    "firstName": "there",
+    "email": "hello@swiftnumbers.com",
+    "location": "Austin, TX",
+    "website": "https://www.swiftnumbers.com",
+    "personalHook": "noticed your dedicated monthly client bookkeeping and receipt reconciliation services",
+    "status": "pending"
+  },
+  {
+    "id": 6,
+    "firmName": "AccuraBooks",
+    "firstName": "there",
+    "email": "help@accurabooks.com",
+    "location": "Austin, TX",
+    "website": "https://www.accurabooks.com",
+    "personalHook": "saw your emphasis on cloud accounting and streamlining financial records for growing companies",
+    "status": "pending"
+  },
+  {
+    "id": 7,
+    "firmName": "Kristy R. Cortez, CPA",
+    "firstName": "Kristy",
+    "email": "info@kristyrcortezcpa.com",
+    "location": "Austin, TX",
+    "website": "https://www.kristyrcortezcpa.com",
+    "personalHook": "came across your firm and noticed your focus on small business tax compliance and client document intake",
+    "status": "pending"
+  },
+  {
+    "id": 8,
+    "firmName": "Barmann Bookkeeping",
+    "firstName": "Sarah",
+    "email": "barmannbookkeeping@gmail.com",
+    "location": "Denver, CO",
+    "website": "https://www.barmannbookkeeping.com",
+    "personalHook": "noticed your boutique bookkeeping focus for hospitality and local service businesses",
+    "status": "pending"
+  },
+  {
+    "id": 9,
+    "firmName": "Sound Advice Bookkeeping",
+    "firstName": "there",
+    "email": "info@soundadvicebookkeeping.com",
+    "location": "Denver, CO",
+    "website": "https://soundadvicebookkeeping.com",
+    "personalHook": "saw your focus on monthly reconciliations and helping small business owners maximize efficiency",
+    "status": "pending"
+  },
+  {
+    "id": 10,
+    "firmName": "Ray CPA, P.C.",
+    "firstName": "Mr. Ray",
+    "email": "jray@raycpapc.com",
+    "location": "Round Rock, TX",
+    "website": "https://www.theroundrockcpa.com",
+    "personalHook": "noticed your specialized outsourced accounting and historical financial cleanup services",
+    "status": "pending"
+  }
+]
