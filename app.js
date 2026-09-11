@@ -627,6 +627,9 @@ function handleSaveLead(e) {
 
   saveData();
   renderApp();
+  closeLeadModal();
+}
+
 // ==========================================
 // AI Lead Scout (Google Search Grounding)
 // ==========================================
