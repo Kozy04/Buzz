@@ -397,6 +397,37 @@ body {
   text-decoration: none;
 }
 
+/* Delete Buttons & Danger Actions */
+.delete-lead-btn {
+  transition: all 0.2s ease;
+}
+
+.delete-lead-btn:hover,
+.delete-lead-btn:active {
+  color: var(--accent-danger) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+}
+
+.btn-danger-icon {
+  background: var(--bg-surface);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: var(--accent-danger);
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-danger-icon:hover,
+.btn-danger-icon:active {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: var(--accent-danger);
+}
+
 /* Empty State */
 .empty-state {
   text-align: center;

@@ -661,6 +661,13 @@ function renderLeadsList() {
               <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
             </svg>
           </button>
+
+          <button class="icon-btn delete-lead-btn" data-id="${lead.id}" style="width: 36px; height: 36px; color: var(--text-muted);" title="Delete Prospect">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
         </div>
 
         ${lead.website ? `
@@ -678,6 +685,14 @@ function renderLeadsList() {
     // Event handlers inside card
     card.querySelector(".btn-open-draft").addEventListener("click", () => openDrafter(lead));
     card.querySelector(".edit-lead-btn").addEventListener("click", () => openEditLeadModal(lead));
+    
+    const cardDeleteBtn = card.querySelector(".delete-lead-btn");
+    if (cardDeleteBtn) {
+      cardDeleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        deleteLead(lead.id);
+      });
+    }
     
     const snoozeBtn = card.querySelector(".snooze-btn");
     if (snoozeBtn) {
@@ -1185,6 +1200,8 @@ function openAddLeadModal() {
   document.getElementById("leadModalTitle").textContent = "Add New Prospect";
   document.getElementById("editLeadId").value = "";
   document.getElementById("leadForm").reset();
+  const delBtn = document.getElementById("btnDeleteLeadModal");
+  if (delBtn) delBtn.style.display = "none";
   const statusEl = document.getElementById("formStatus");
   if (statusEl) statusEl.value = "pending";
   const fuDateEl = document.getElementById("formFollowUpDate");
@@ -1202,6 +1219,9 @@ function openEditLeadModal(lead) {
   document.getElementById("formWebsite").value = lead.website || "";
   document.getElementById("formHook").value = lead.personalHook || "";
   
+  const delBtn = document.getElementById("btnDeleteLeadModal");
+  if (delBtn) delBtn.style.display = "inline-flex";
+
   const statusEl = document.getElementById("formStatus");
   if (statusEl) statusEl.value = lead.status || "pending";
   const fuDateEl = document.getElementById("formFollowUpDate");
@@ -1210,6 +1230,22 @@ function openEditLeadModal(lead) {
   }
   
   document.getElementById("modalLead").style.display = "flex";
+}
+
+function deleteLead(leadId) {
+  const target = leads.find(l => String(l.id) === String(leadId));
+  if (!target) return;
+
+  if (confirm(`Delete "${target.firmName}" from your pipeline?`)) {
+    leads = leads.filter(l => String(l.id) !== String(leadId));
+    saveData();
+    renderApp();
+    if (activeLead && String(activeLead.id) === String(leadId)) {
+      closeDrafter();
+    }
+    closeLeadModal();
+    showToast(`Deleted ${target.firmName} 🗑️`);
+  }
 }
 
 function closeLeadModal() {
@@ -1527,6 +1563,20 @@ function importData(e) {
   reader.readAsText(file);
 }
 
+function clearAllLeads() {
+  if (!leads || leads.length === 0) {
+    showToast("Pipeline is already empty.");
+    return;
+  }
+  if (confirm(`Are you sure you want to delete all ${leads.length} leads in your pipeline? You can always restore the sample leads or re-import a backup.`)) {
+    leads = [];
+    saveData();
+    renderApp();
+    closeSettingsModal();
+    showToast("All leads cleared from pipeline 🗑️");
+  }
+}
+
 function resetToDefaults() {
   if (confirm("Reset all leads back to the default 10 verified prospects?")) {
     leads = [...DEFAULT_LEADS];
@@ -1607,6 +1657,15 @@ function setupEventListeners() {
   document.getElementById("btnLaunchMail").addEventListener("click", launchMailApp);
   document.getElementById("btnCopyEmail").addEventListener("click", copyEmailToClipboard);
   document.getElementById("btnAiDraft").addEventListener("click", generateWithGemini);
+  
+  const btnDeleteFromDrafter = document.getElementById("btnDeleteFromDrafter");
+  if (btnDeleteFromDrafter) {
+    btnDeleteFromDrafter.addEventListener("click", () => {
+      if (activeLead) {
+        deleteLead(activeLead.id);
+      }
+    });
+  }
 
   // Template pills
   document.querySelectorAll(".template-pill").forEach(pill => {
@@ -1652,6 +1711,16 @@ function setupEventListeners() {
   document.getElementById("btnCloseLeadModal").addEventListener("click", closeLeadModal);
   document.getElementById("btnCancelLead").addEventListener("click", closeLeadModal);
   document.getElementById("leadForm").addEventListener("submit", handleSaveLead);
+
+  const btnDeleteLeadModal = document.getElementById("btnDeleteLeadModal");
+  if (btnDeleteLeadModal) {
+    btnDeleteLeadModal.addEventListener("click", () => {
+      const idVal = document.getElementById("editLeadId")?.value;
+      if (idVal) {
+        deleteLead(idVal);
+      }
+    });
+  }
 
   // Scout Modal events
   const btnOpenScout = document.getElementById("btnOpenScout");
@@ -1715,6 +1784,7 @@ function setupEventListeners() {
 
   document.getElementById("btnExportData").addEventListener("click", exportData);
   document.getElementById("inputImportFile").addEventListener("change", importData);
+  document.getElementById("btnClearAllLeads")?.addEventListener("click", clearAllLeads);
   document.getElementById("btnResetDefaults").addEventListener("click", resetToDefaults);
 
   // Close modals on overlay backdrop tap
