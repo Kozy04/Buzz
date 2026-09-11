@@ -1111,7 +1111,7 @@ async function generateMockupWithImagen() {
   const isSmartRename = (settings.businessName || "").toLowerCase().includes("smartrename");
   const cleanFirm = (activeLead.firmName || "lead").toLowerCase().replace(/[^a-z0-9]/g, "_");
 
-  // Formulate SVG prompt tailored to active lead and chosen concept
+  // Formulate SVG prompt tailored to active lead and chosen concept with strict boundary geometry
   let svgPrompt = "";
   if (isSmartRename) {
     if (concept === "videoThumb") {
@@ -1119,20 +1119,37 @@ async function generateMockupWithImagen() {
 Concept: A premium video demo preview card. In the center, a glowing frosted-glass play button with text "30-Sec Demo for ${activeLead.firstName || "Team"} at ${activeLead.firmName}".
 Background: Dark cyber obsidian (#080B11), ambient cyan (#00F0FF) and purple (#8B5CF6) glowing blur orbs. Shows clean automated document processing badges, "SmartRename AI Vision", and 85% time-savings tag.
 Style: Premium typography, glassmorphic cards, modern tech aesthetic.
+
+CRITICAL BOUNDARY CONSTRAINTS:
+1. Main video player card: x="160", y="150", width="960", height="460", rx="24".
+2. All text, badges, and the play button MUST be centered and strictly contained within the player frame with ample margins.
 IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. Do NOT wrap in markdown code blocks, do not include explanations.`;
     } else if (concept === "portalDashboard") {
       svgPrompt = `Generate a sleek, dark-mode 16:9 presentation graphic as raw SVG code (width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg") for "${activeLead.firmName}" in ${activeLead.location || "USA"}.
 Concept: A futuristic SaaS client document portal branded for "${activeLead.firmName}". Shows file extraction cards, OCR detection tags (Vendor, Date, Amount), glowing progress bar (50/50 files organized), and automated client folder queue.
 Style: Dark obsidian (#080B11) background, neon cyan (#00F0FF) and violet (#8B5CF6) accents, glassmorphic panels, crisp modern typography.
+
+CRITICAL BOUNDARY CONSTRAINTS:
+1. Container cards must have at least 40px internal padding.
+2. All text strings inside cards MUST be comfortably contained with at least 40px margin from any card border.
+3. Queue list text must be under 38 characters and use font-size="14".
+4. Add <clipPath> to container panels to guarantee zero overflow.
 IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. Do NOT wrap in markdown code blocks, do not include explanations.`;
     } else {
       // Before & After (Default)
       svgPrompt = `Generate a sleek, dark-mode 16:9 presentation graphic as raw SVG code (width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg") for "${activeLead.firmName}".
-Concept: Split-screen transformation comparison.
-- Left side: "BEFORE: Chaotic Client Files" with red-tinted glass card showing messy filenames like 'scan_0042.pdf', 'IMG_9102.jpg', 'receipt_coffee.pdf'.
-- Center: glowing neon cyan arrow or transition badge.
-- Right side: "AFTER: SmartRename AI" with electric cyan/emerald card showing organized client hierarchy: '📁 Clients / Apex / 2026-09-11_Adobe_INV-891.pdf', '📁 Clients / Beacon / 2026-09-11_Staples_RCP-102.pdf'.
+Concept: Split-screen Before & After transformation comparison.
+- Left Card: "BEFORE: Chaotic Client Files" (red-tinted dark glassmorphic card). Shows messy unorganized filenames: 'scan_0042.pdf', 'IMG_9102.jpg', 'receipt_coffee.pdf', 'invoice_temp.pdf'.
+- Center: glowing neon cyan transition arrow with "AI" badge.
+- Right Card: "AFTER: SmartRename AI" (electric cyan dark glassmorphic card). Shows organized client hierarchy with clean, short folder paths: '📁 Clients/Apex/2026_Adobe_INV.pdf', '📁 Clients/Beacon/2026_Staples_RCP.pdf', '📁 Clients/Zenith/2026_QuickBooks.pdf'.
 Style: Dark obsidian (#080B11) background, glowing ambient circles, clean sans-serif typography, glassmorphism.
+
+CRITICAL BOUNDARY & LAYOUT CONSTRAINTS (MANDATORY FOR QUALITY):
+1. Left Card: x="80", y="180", width="510", height="440", rx="20".
+2. Right Card: x="690", y="180", width="510", height="440", rx="20".
+3. Text Padding: Inside cards, text MUST start at relative x="35" from the card left edge.
+4. TEXT CONTAINMENT (VERY IMPORTANT): Under NO circumstance may text exceed or touch the card boundary. All text lines inside cards must be STRICTLY under 30 characters and use font-size="14" or "15" (monospace).
+5. Add <clipPath> definitions for both cards to guarantee zero overflow beyond card borders.
 IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. Do NOT wrap in markdown code blocks, do not include explanations.`;
     }
   } else {
@@ -1141,16 +1158,19 @@ IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. Do NOT wrap in markdown 
       svgPrompt = `Generate a sleek, dark-mode 16:9 presentation graphic as raw SVG code (width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg") for "${activeLead.firmName}".
 Concept: Video pitch player card with glowing play button reading "Brief Demo for ${activeLead.firstName || "Team"} at ${activeLead.firmName}". Illustrating ${settings.businessName} and "${settings.valueProp}".
 Style: Deep dark obsidian (#080B11) background, cyan and purple accents, glassmorphism.
+CRITICAL BOUNDARY CONSTRAINTS: All text and elements must remain strictly within the card with 40px margins.
 IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. No markdown fences.`;
     } else if (concept === "portalDashboard") {
       svgPrompt = `Generate a sleek, dark-mode 16:9 presentation graphic as raw SVG code (width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg") for "${activeLead.firmName}".
 Concept: Modern executive analytics dashboard branded for "${activeLead.firmName}" powered by ${settings.businessName}. Data cards demonstrating "${settings.valueProp}".
 Style: Dark background, glowing accents, clean glass panels.
+CRITICAL BOUNDARY CONSTRAINTS: All text and elements must remain strictly within the card with 40px margins.
 IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. No markdown fences.`;
     } else {
       svgPrompt = `Generate a sleek, dark-mode 16:9 presentation graphic as raw SVG code (width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg") for "${activeLead.firmName}".
 Concept: Split-screen visual transformation. Left: "BEFORE" manual workflow bottlenecks. Right: "AFTER: ${settings.businessName}" automated high-efficiency solution for "${settings.valueProp}".
 Style: Deep dark obsidian (#080B11) background, glowing cyan and purple accents, glassmorphic cards.
+CRITICAL BOUNDARY CONSTRAINTS: Left card x="80", w="510". Right card x="690", w="510". Text strictly under 30 characters and font-size="14". Define <clipPath> to prevent text overflowing card boundaries.
 IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. No markdown fences.`;
     }
   }
@@ -1165,7 +1185,7 @@ IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. No markdown fences.`;
       const payload = {
         contents: [{ parts: [{ text: svgPrompt }] }],
         generationConfig: {
-          temperature: 0.7,
+          temperature: 0.5,
           maxOutputTokens: 8192,
           thinkingConfig: { thinkingBudget: 0 }
         }
@@ -1191,7 +1211,8 @@ IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. No markdown fences.`;
         const rawText = data.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("") || "";
         const svgMatch = rawText.match(/<svg[\s\S]*<\/svg>/i);
         if (svgMatch && svgMatch[0]) {
-          const converted = await svgToJpeg(svgMatch[0], 1280, 720);
+          const sanitizedSvg = sanitizeAndContainSvg(svgMatch[0]);
+          const converted = await svgToJpeg(sanitizedSvg, 1280, 720);
           generatedDataUrl = converted.dataUrl;
           usedEngine = "Gemini AI Vector (1280x720)";
         }
@@ -1265,6 +1286,81 @@ IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. No markdown fences.`;
   } finally {
     btn.disabled = false;
     btnText.textContent = originalText;
+  }
+}
+
+// Sanitize and strictly contain SVG layout to prevent text from overflowing card boundaries
+function sanitizeAndContainSvg(svgCode) {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgCode, "image/svg+xml");
+    const svg = doc.querySelector("svg");
+    if (!svg || doc.querySelector("parsererror")) return svgCode;
+
+    // Standardize viewBox and dimensions
+    if (!svg.getAttribute("viewBox")) svg.setAttribute("viewBox", "0 0 1280 720");
+    svg.setAttribute("width", "1280");
+    svg.setAttribute("height", "720");
+
+    let defs = svg.querySelector("defs");
+    if (!defs) {
+      defs = doc.createElementNS("http://www.w3.org/2000/svg", "defs");
+      svg.insertBefore(defs, svg.firstChild);
+    }
+
+    // Universal typography style to ensure clean rendering on any device
+    const style = doc.createElementNS("http://www.w3.org/2000/svg", "style");
+    style.textContent = `
+      text {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+        text-rendering: geometricPrecision;
+      }
+    `;
+    defs.appendChild(style);
+
+    // Strict containment: scan all text elements
+    const textEls = doc.querySelectorAll("text");
+    textEls.forEach(el => {
+      const txt = el.textContent || "";
+      const trimmed = txt.trim();
+
+      // Check if it's a file list item or folder path
+      const isFileOrPath = /\.(pdf|jpg|png|xlsx|docx|csv|txt)/i.test(trimmed) || 
+                           trimmed.includes("📁") || 
+                           trimmed.includes("📄") || 
+                           trimmed.includes("Clients") ||
+                           trimmed.includes("BEFORE") ||
+                           trimmed.includes("AFTER");
+
+      if (isFileOrPath) {
+        // Enforce maximum font size of 14px for list items
+        const currentFontSize = parseFloat(el.getAttribute("font-size") || "16");
+        if (currentFontSize > 14 && !trimmed.startsWith("BEFORE") && !trimmed.startsWith("AFTER")) {
+          el.setAttribute("font-size", "14");
+        }
+
+        // Condense any path longer than 30 characters so it cannot bleed past the card border
+        if (trimmed.length > 30) {
+          let clean = trimmed.replace(/\s*\/\s*/g, "/");
+          if (clean.length > 30) {
+            const parts = clean.split("/");
+            if (parts.length >= 3) {
+              const root = parts.slice(0, 2).join("/");
+              const leaf = parts.slice(2).join("/");
+              clean = `${root}/${leaf.slice(0, 14)}…${leaf.slice(-4)}`;
+            } else {
+              clean = clean.slice(0, 27) + "…";
+            }
+          }
+          el.textContent = clean;
+        }
+      }
+    });
+
+    return new XMLSerializer().serializeToString(doc);
+  } catch (err) {
+    console.warn("SVG sanitization fallback:", err);
+    return svgCode;
   }
 }
 
@@ -1450,70 +1546,84 @@ function generateCanvasMockup(firmName, firstName, location, concept, businessNa
     ctx.font = "bold 20px sans-serif";
     ctx.fillText(`⚡ Live Filing Queue: ${firmName} Client Batches`, 150, 465);
 
-    ctx.font = "16px monospace";
+    ctx.font = "14px monospace";
     ctx.fillStyle = "#A1A1AA";
-    ctx.fillText("✓ 2026-09-11_Adobe_INV-9821.pdf  ➔  /Clients/Apex/Invoices/  [EXTRACTED]", 150, 515);
-    ctx.fillText("✓ 2026-09-11_HomeDepot_RCP-42.pdf  ➔  /Clients/Apex/Receipts/  [EXTRACTED]", 150, 555);
-    ctx.fillText("✓ 2026-09-10_Chase_BankStmt.pdf    ➔  /Clients/Beacon/Banking/   [EXTRACTED]", 150, 595);
+    ctx.fillText("✓ 2026_Adobe_INV-891.pdf     ➔  /Clients/Apex/Invoices/    [EXTRACTED]", 150, 515);
+    ctx.fillText("✓ 2026_HomeDepot_RCP-42.pdf  ➔  /Clients/Apex/Receipts/    [EXTRACTED]", 150, 555);
+    ctx.fillText("✓ 2026_Chase_BankStmt.pdf    ➔  /Clients/Beacon/Banking/   [EXTRACTED]", 150, 595);
   } else {
     // Split Screen Before & After (Default)
     // Left Card: Before
     ctx.fillStyle = "rgba(255, 255, 255, 0.03)";
     ctx.strokeStyle = "rgba(239, 68, 68, 0.4)";
     ctx.lineWidth = 2;
-    drawRoundRect(120, 190, 480, 440, 18);
+    drawRoundRect(80, 180, 510, 440, 20);
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = "#EF4444";
     ctx.font = "bold 24px sans-serif";
     ctx.textAlign = "left";
-    ctx.fillText("⚠️ BEFORE: Messy Incoming Scans", 160, 245);
+    ctx.fillText("⚠️ BEFORE: Chaotic Client Files", 115, 235);
+
+    // Save and clip to left card to strictly prevent text overflow
+    ctx.save();
+    drawRoundRect(80, 180, 510, 440, 20);
+    ctx.clip();
 
     const messyFiles = [
-      "📄 scan_0042_final_rev.pdf",
-      "📷 IMG_8291_receipt_cropp.jpg",
-      "📄 statement_oct_unread.pdf",
-      "📷 receipt_gas_station_4.jpg",
-      "📄 invoice_copy_temp_v2.pdf"
+      "📄 scan_0042.pdf",
+      "📷 IMG_9102.jpg",
+      "📄 receipt_coffee.pdf",
+      "📄 invoice_temp.pdf",
+      "📄 project_notes_v2.docx",
+      "📷 IMG_2026_receipt.jpg"
     ];
-    ctx.font = "17px monospace";
+    ctx.font = "14px 'SF Mono', Menlo, Consolas, monospace";
     ctx.fillStyle = "#94A3B8";
     messyFiles.forEach((file, idx) => {
-      ctx.fillText(file, 160, 310 + (idx * 60));
+      ctx.fillText(file, 115, 295 + (idx * 50));
     });
+    ctx.restore();
 
     // Center Arrow
     ctx.fillStyle = "#00F0FF";
     ctx.font = "bold 44px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("➔", 640, 430);
+    ctx.fillText("➔", 640, 410);
 
     // Right Card: After
     ctx.fillStyle = "rgba(255, 255, 255, 0.03)";
     ctx.strokeStyle = "rgba(0, 240, 255, 0.5)";
     ctx.lineWidth = 2;
-    drawRoundRect(680, 190, 480, 440, 18);
+    drawRoundRect(690, 180, 510, 440, 20);
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = "#00F0FF";
     ctx.font = "bold 24px sans-serif";
     ctx.textAlign = "left";
-    ctx.fillText(`✨ AFTER: ${businessName || "SmartRename AI"}`, 720, 245);
+    ctx.fillText(`✨ AFTER: ${businessName || "SmartRename AI"}`, 725, 235);
+
+    // Save and clip to right card to strictly prevent text overflow
+    ctx.save();
+    drawRoundRect(690, 180, 510, 440, 20);
+    ctx.clip();
 
     const cleanFiles = [
-      "📁 /Clients/Apex/2026-09_Adobe_INV-891.pdf",
-      "📁 /Clients/Apex/2026-09_HomeDepot_RCP-42.pdf",
-      "📁 /Clients/Beacon/2026-09_Chase_Stmt.pdf",
-      "📁 /Clients/Beacon/2026-09_Chevron_Fuel.pdf",
-      "📁 /Clients/Crest/2026-09_QuickBooks.pdf"
+      "📁 Clients/Apex/2026_Adobe_INV.pdf",
+      "📁 Clients/Beacon/2026_Staples_RCP.pdf",
+      "📁 Clients/Apex/2026_MeetingNotes.pdf",
+      "📁 Clients/Zenith/2026_QuickBooks.pdf",
+      "📁 Clients/Beacon/2026_Contract.pdf",
+      "📁 Clients/Zenith/2026_Proposal.pdf"
     ];
-    ctx.font = "17px monospace";
+    ctx.font = "14px 'SF Mono', Menlo, Consolas, monospace";
     ctx.fillStyle = "#34D399";
     cleanFiles.forEach((file, idx) => {
-      ctx.fillText(file, 720, 310 + (idx * 60));
+      ctx.fillText(file, 725, 295 + (idx * 50));
     });
+    ctx.restore();
   }
 
   // Footer Tag
