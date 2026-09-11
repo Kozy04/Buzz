@@ -124,9 +124,59 @@ let currentFilter = "all";
 let currentSearch = "";
 let activeLead = null;
 let activeTemplate = "receipt";
+
+// Business / Campaign Presets
+const BUSINESS_PRESETS = {
+  smartrename: {
+    businessName: "SmartRename AI",
+    senderName: "Founder, SmartRename AI",
+    productUrl: "https://smartrenameai.online",
+    valueProp: "Eliminates hours of manual document sorting by using vision AI to auto-rename receipts, statements, and invoices and build clean client folders in seconds.",
+    offer: "Process 15-20 of your messiest sample client files for free in 5 minutes so you can see the speed",
+    targetNiche: "Boutique Bookkeeping & Accounting Firms"
+  },
+  agency: {
+    businessName: "Apex Digital Studio",
+    senderName: "Creative Director",
+    productUrl: "https://apexstudio.design",
+    valueProp: "Designs high-converting, lightning-fast modern websites that turn visitors into booked consultations and high-ticket clients.",
+    offer: "Free 5-minute custom video audit of your current website with 3 immediate conversion fixes",
+    targetNiche: "Boutique Law Firms & Legal Practices"
+  },
+  seo: {
+    businessName: "RankPulse Growth",
+    senderName: "Growth Partner",
+    productUrl: "https://rankpulse.io",
+    valueProp: "Generates high-intent inbound client leads through localized Google search optimization and content authority pipelines.",
+    offer: "Free 1-page local competitor search breakdown showing where your firm is losing clients",
+    targetNiche: "Real Estate Agencies & Property Managers"
+  },
+  consulting: {
+    businessName: "Vanguard Advisory",
+    senderName: "Managing Consultant",
+    productUrl: "https://vanguardadvisory.com",
+    valueProp: "Streamlines internal team operations, reduces overhead by 25%, and implements automated standard operating procedures.",
+    offer: "Zero-cost 20-minute operational diagnostic to pinpoint your team's biggest profit leaks",
+    targetNiche: "Construction & Subcontractors"
+  },
+  custom: {
+    businessName: "",
+    senderName: "",
+    productUrl: "",
+    valueProp: "",
+    offer: "",
+    targetNiche: ""
+  }
+};
+
 let settings = {
+  profileKey: "smartrename",
+  businessName: "SmartRename AI",
   senderName: "Founder, SmartRename AI",
   productUrl: "https://smartrenameai.online",
+  valueProp: "Eliminates hours of manual document sorting by using vision AI to auto-rename receipts, statements, and invoices and build clean client folders in seconds.",
+  offer: "Process 15-20 of your messiest sample client files for free in 5 minutes so you can see the speed",
+  targetNiche: "Boutique Bookkeeping & Accounting Firms",
   geminiApiKey: ""
 };
 
@@ -135,10 +185,17 @@ let selectedFollowUpScheduleDays = 3;
 // Templates (Initial Hooks + 3-Stage Follow-Up Cadence)
 const TEMPLATES = {
   receipt: {
-    name: "1. Receipt Hook",
+    name: "1. Core Pitch Hook",
     cadenceStage: "Initial Pitch",
-    getSubject: (lead) => `receipt & invoice naming at ${lead.firmName}`,
-    getBody: (lead) => `Hi ${lead.firstName},
+    getSubject: (lead) => {
+      if (settings.businessName === "SmartRename AI") {
+        return `receipt & invoice naming at ${lead.firmName}`;
+      }
+      return `quick question re: ${lead.firmName}`;
+    },
+    getBody: (lead) => {
+      if (settings.businessName === "SmartRename AI") {
+        return `Hi ${lead.firstName},
 
 I came across ${lead.firmName} and ${lead.personalHook}.
 
@@ -156,14 +213,40 @@ Best regards,
 
 ${settings.senderName}
 SmartRename AI
-${settings.productUrl}`
+${settings.productUrl}`;
+      }
+
+      // Universal Pitch Template
+      return `Hi ${lead.firstName},
+
+I came across ${lead.firmName} and ${lead.personalHook}.
+
+Quick question: how is your team currently handling ${settings.valueProp ? settings.valueProp.toLowerCase() : "your operational workflow"}?
+
+We built ${settings.businessName} (${settings.productUrl}) specifically to solve this for teams like yours.
+
+${settings.offer ? `We'd love to offer: ${settings.offer}.` : "Would you be open to a quick, zero-obligation preview on your workflow?"}
+
+Best regards,
+
+${settings.senderName}
+${settings.businessName}
+${settings.productUrl}`;
+    }
   },
 
   cpa: {
-    name: "1. CPA Hook",
+    name: "1. Direct Value Hook",
     cadenceStage: "Initial Pitch",
-    getSubject: (lead) => `eliminating manual document renaming at ${lead.firmName}`,
-    getBody: (lead) => `Hi ${lead.firstName},
+    getSubject: (lead) => {
+      if (settings.businessName === "SmartRename AI") {
+        return `eliminating manual document renaming at ${lead.firmName}`;
+      }
+      return `helping ${lead.firmName} with ${settings.businessName || "workflow growth"}`;
+    },
+    getBody: (lead) => {
+      if (settings.businessName === "SmartRename AI") {
+        return `Hi ${lead.firstName},
 
 I noticed the full-service accounting and tax work your team does for businesses at ${lead.firmName}.
 
@@ -179,20 +262,37 @@ Best regards,
 
 ${settings.senderName}
 SmartRename AI
-${settings.productUrl}`
+${settings.productUrl}`;
+      }
+
+      // Universal Direct Value Hook
+      return `Hi ${lead.firstName},
+
+I noticed the specialized work your team does at ${lead.firmName}.
+
+We help businesses in your space with ${settings.valueProp || "streamlining core operations"}.
+
+Rather than a long pitch, ${settings.offer ? `we'd be happy to ${settings.offer.toLowerCase()}` : "would you be open to a 2-minute conversation"} so you can see if it's a fit for ${lead.firmName}?
+
+Best regards,
+
+${settings.senderName}
+${settings.businessName}
+${settings.productUrl}`;
+    }
   },
 
   followup1: {
     name: "2. Bump (Day 3)",
     cadenceStage: "Follow-Up #1",
-    getSubject: (lead) => `Re: receipt & invoice naming at ${lead.firmName}`,
+    getSubject: (lead) => `Re: ${TEMPLATES.receipt.getSubject(lead)}`,
     getBody: (lead) => `Hi ${lead.firstName},
 
-Just bumping this to the top of your inbox in case it got buried under client receipts earlier this week.
+Just bumping this to the top of your inbox in case it got buried earlier this week.
 
-Did you get a quick moment to consider whether automating document renaming on incoming client files would help your team at ${lead.firmName}?
+Did you get a quick moment to consider whether ${settings.valueProp ? settings.valueProp.toLowerCase() : "our platform"} could help ${lead.firmName}?
 
-Happy to send over a 45-second screen recording showing how SmartRename AI (${settings.productUrl}) handles 30 messy PDFs in one click if you're swamped.
+Happy to share a 45-second screen recording showing how ${settings.businessName} works if you're swamped.
 
 Best,
 
@@ -202,20 +302,19 @@ ${settings.senderName}`
   followup2: {
     name: "3. Proof (Day 7)",
     cadenceStage: "Follow-Up #2",
-    getSubject: (lead) => `saving 4+ hours on document cleanup at ${lead.firmName}`,
+    getSubject: (lead) => `quick proof point for ${lead.firmName}`,
     getBody: (lead) => `Hi ${lead.firstName},
 
 I know you're busy running things at ${lead.firmName}, so I'll keep this under 30 seconds.
 
-One of the bookkeepers using SmartRename AI mentioned they used to spend Friday afternoons manually renaming and sorting client bank statements, receipts, and invoices that arrived as "scan_001.pdf".
+One of our clients recently shared that partnering with ${settings.businessName} helped them eliminate hours of manual bottlenecks each week.
 
-With SmartRename AI (${settings.productUrl}), they now drop 50 files into the tool, and within seconds, each file is renamed to "YYYY-MM-DD_Vendor_Amount" and filed into clean client folders.
-
-If you have 10 messy sample files, send them over—I'll process them free today so you can see the result on your own client files.
+${settings.offer ? `We would love to extend the same offer to ${lead.firmName}: ${settings.offer}.` : `Would you be open to testing this on your team?`}
 
 Best regards,
 
-${settings.senderName}`
+${settings.senderName}
+${settings.productUrl}`
   },
 
   followup3: {
@@ -224,13 +323,13 @@ ${settings.senderName}`
     getSubject: (lead) => `closing the loop / ${lead.firmName}`,
     getBody: (lead) => `Hi ${lead.firstName},
 
-I haven't heard back, so I assume automating document renaming and folder organization isn't a priority for ${lead.firmName} right now. Completely understand!
+I haven't heard back, so I assume ${settings.valueProp ? settings.valueProp.toLowerCase() : "this"} isn't a top priority for ${lead.firmName} right now. Completely understand!
 
-I won't clutter your inbox with any further emails. 
+I won't clutter your inbox with any further follow-ups.
 
-If you ever find your team losing too much time during tax season or monthly close renaming unorganized client files, feel free to test SmartRename AI anytime at ${settings.productUrl}.
+If your team ever needs help with ${settings.valueProp ? settings.valueProp.toLowerCase() : "this area"}, feel free to check out ${settings.businessName} anytime at ${settings.productUrl}.
 
-Wishing you and the team at ${lead.firmName} continued success!
+Wishing you and ${lead.firmName} continued success!
 
 Best,
 
@@ -337,15 +436,42 @@ function loadData() {
     saveData();
   }
 
-  const savedSettings = localStorage.getItem(STORAGE_KEY_SETTINGS);
   if (savedSettings) {
     try {
       settings = { ...settings, ...JSON.parse(savedSettings) };
     } catch (e) {}
   }
-  document.getElementById("settingsSenderName").value = settings.senderName;
-  document.getElementById("settingsProductUrl").value = settings.productUrl;
-  document.getElementById("settingsGeminiKey").value = settings.geminiApiKey || "";
+
+  // Populate settings form elements
+  const profileSelect = document.getElementById("settingsProfileSelect");
+  if (profileSelect) profileSelect.value = settings.profileKey || "smartrename";
+
+  const bName = document.getElementById("settingsBusinessName");
+  if (bName) bName.value = settings.businessName || "SmartRename AI";
+
+  const sName = document.getElementById("settingsSenderName");
+  if (sName) sName.value = settings.senderName || "Founder, SmartRename AI";
+
+  const pUrl = document.getElementById("settingsProductUrl");
+  if (pUrl) pUrl.value = settings.productUrl || "https://smartrenameai.online";
+
+  const vProp = document.getElementById("settingsValueProp");
+  if (vProp) vProp.value = settings.valueProp || "Eliminates hours of manual document sorting by using vision AI to auto-rename receipts, statements, and invoices and build clean client folders in seconds.";
+
+  const sOffer = document.getElementById("settingsOffer");
+  if (sOffer) sOffer.value = settings.offer || "Process 15-20 of your messiest sample client files for free in 5 minutes so you can see the speed";
+
+  const gKey = document.getElementById("settingsGeminiKey");
+  if (gKey) gKey.value = settings.geminiApiKey || "";
+
+  updateHeaderBranding();
+}
+
+function updateHeaderBranding() {
+  const tagEl = document.getElementById("headerBrandSub");
+  if (tagEl) {
+    tagEl.textContent = `${settings.businessName || "SmartRename AI"} Pipeline`;
+  }
 }
 
 function saveData() {
@@ -354,11 +480,35 @@ function saveData() {
 }
 
 function saveSettings() {
-  settings.senderName = document.getElementById("settingsSenderName").value.trim() || "Founder, SmartRename AI";
-  settings.productUrl = document.getElementById("settingsProductUrl").value.trim() || "https://smartrenameai.online";
-  settings.geminiApiKey = document.getElementById("settingsGeminiKey").value.trim();
+  const profileSelect = document.getElementById("settingsProfileSelect");
+  settings.profileKey = profileSelect ? profileSelect.value : "smartrename";
+  settings.businessName = document.getElementById("settingsBusinessName")?.value.trim() || "SmartRename AI";
+  settings.senderName = document.getElementById("settingsSenderName")?.value.trim() || "Founder, SmartRename AI";
+  settings.productUrl = document.getElementById("settingsProductUrl")?.value.trim() || "https://smartrenameai.online";
+  settings.valueProp = document.getElementById("settingsValueProp")?.value.trim() || "Automated file processing";
+  settings.offer = document.getElementById("settingsOffer")?.value.trim() || "Free test on sample files";
+  settings.geminiApiKey = document.getElementById("settingsGeminiKey")?.value.trim() || "";
+
   localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
-  showToast("Settings saved");
+  updateHeaderBranding();
+  if (activeLead) {
+    updateDrafterContent();
+  }
+  showToast("Profile & Settings saved! 🏢");
+}
+
+function handleProfilePresetChange(e) {
+  const presetKey = e.target.value;
+  const preset = BUSINESS_PRESETS[presetKey];
+  if (!preset) return;
+
+  if (presetKey !== "custom") {
+    document.getElementById("settingsBusinessName").value = preset.businessName;
+    document.getElementById("settingsSenderName").value = preset.senderName;
+    document.getElementById("settingsProductUrl").value = preset.productUrl;
+    document.getElementById("settingsValueProp").value = preset.valueProp;
+    document.getElementById("settingsOffer").value = preset.offer;
+  }
 }
 
 // ==========================================
@@ -626,9 +776,12 @@ async function generateWithGemini() {
   aiBtn.classList.add("loading");
   aiBtnText.textContent = "AI Drafting...";
 
+  const isSmartRename = (settings.businessName || "").toLowerCase().includes("smartrename");
   let promptText = "";
-  if (activeTemplate === "followup1") {
-    promptText = `You are an elite B2B cold email copywriter. Write a 45-word polite, ultra-brief follow-up email from "${settings.senderName}" to "${activeLead.firstName}" at "${activeLead.firmName}".
+
+  if (isSmartRename) {
+    if (activeTemplate === "followup1") {
+      promptText = `You are an elite B2B cold email copywriter. Write a 45-word polite, ultra-brief follow-up email from "${settings.senderName}" to "${activeLead.firstName}" at "${activeLead.firmName}".
 Context: Sent an email 3 days ago about SmartRename AI (${settings.productUrl}) to automate document and receipt renaming for ${activeLead.firmName}.
 Goal: Friendly bump to the top of inbox. Mention you know they are busy with client files. Ask if they'd like a 45-second screen recording.
 Strict Rules: Under 60 words, zero fluff, casual & respectful peer-to-peer tone.
@@ -636,8 +789,8 @@ Format strictly:
 SUBJECT: Re: receipt & invoice naming at ${activeLead.firmName}
 BODY:
 [body]`;
-  } else if (activeTemplate === "followup2") {
-    promptText = `You are an elite B2B cold email copywriter. Write a 65-word value-proof follow-up email from "${settings.senderName}" to "${activeLead.firstName}" at "${activeLead.firmName}".
+    } else if (activeTemplate === "followup2") {
+      promptText = `You are an elite B2B cold email copywriter. Write a 65-word value-proof follow-up email from "${settings.senderName}" to "${activeLead.firstName}" at "${activeLead.firmName}".
 Context: Sent two emails earlier regarding SmartRename AI (${settings.productUrl}).
 Goal: Share a quick real-world proof point: a bookkeeper saves 4+ hours every Friday by having messy incoming client files (scanned receipts, bank statements) automatically renamed and organized into client folders. Offer to process 10 sample files for free today.
 Strict Rules: Under 75 words, no buzzwords.
@@ -645,8 +798,8 @@ Format strictly:
 SUBJECT: saving 4+ hours on document cleanup at ${activeLead.firmName}
 BODY:
 [body]`;
-  } else if (activeTemplate === "followup3") {
-    promptText = `You are an elite B2B cold email copywriter. Write a 45-word polite "breakup / closing the file" email from "${settings.senderName}" to "${activeLead.firstName}" at "${activeLead.firmName}".
+    } else if (activeTemplate === "followup3") {
+      promptText = `You are an elite B2B cold email copywriter. Write a 45-word polite "breakup / closing the file" email from "${settings.senderName}" to "${activeLead.firstName}" at "${activeLead.firmName}".
 Context: Followed up twice with no response.
 Goal: Politely assume automating client document renaming isn't a priority right now, promise not to email again, leave the link to SmartRename AI (${settings.productUrl}) in case tax season or file chaos ever becomes an issue. Wish them success.
 Strict Rules: Under 50 words, completely non-passive-aggressive, warm and professional.
@@ -654,9 +807,9 @@ Format strictly:
 SUBJECT: closing the loop / ${activeLead.firmName}
 BODY:
 [body]`;
-  } else {
-    // Initial pitch prompt
-    promptText = `You are an elite B2B cold email copywriter. Write a concise, hyper-personalized, non-spammy cold outreach email from "${settings.senderName}" to "${activeLead.firstName}" at "${activeLead.firmName}".
+    } else {
+      // Initial pitch prompt for SmartRename AI
+      promptText = `You are an elite B2B cold email copywriter. Write a concise, hyper-personalized, non-spammy cold outreach email from "${settings.senderName}" to "${activeLead.firstName}" at "${activeLead.firmName}".
 
 Target Info:
 - Firm: ${activeLead.firmName}
@@ -677,6 +830,59 @@ Strict Rules:
 SUBJECT: [short lowercase subject]
 BODY:
 [complete email body]`;
+    }
+  } else {
+    // Dynamic generation for ANY other business (Web Agency, SEO, Consulting, White-Label SaaS, etc.)
+    if (activeTemplate === "followup1") {
+      promptText = `You are an elite B2B cold email copywriter. Write a 45-word polite, ultra-brief follow-up email from "${settings.senderName}" of "${settings.businessName}" (${settings.productUrl}) to "${activeLead.firstName}" at "${activeLead.firmName}".
+Context: Sent an email 3 days ago introducing our work (${settings.valueProp}).
+Goal: Friendly bump to the top of inbox. Ask if they got a quick moment to review or if they'd prefer a 60-second summary.
+Strict Rules: Under 60 words, zero fluff, casual & respectful peer-to-peer tone.
+Format strictly:
+SUBJECT: Re: quick note for ${activeLead.firmName}
+BODY:
+[body]`;
+    } else if (activeTemplate === "followup2") {
+      promptText = `You are an elite B2B cold email copywriter. Write a 65-word value-proof follow-up email from "${settings.senderName}" of "${settings.businessName}" (${settings.productUrl}) to "${activeLead.firstName}" at "${activeLead.firmName}".
+Context: Sent two emails earlier regarding ${settings.businessName}.
+Goal: Share a quick proof point of how we help businesses with "${settings.valueProp}". Reiterate our low-friction offer: "${settings.offer}".
+Strict Rules: Under 75 words, no buzzwords.
+Format strictly:
+SUBJECT: quick proof point for ${activeLead.firmName}
+BODY:
+[body]`;
+    } else if (activeTemplate === "followup3") {
+      promptText = `You are an elite B2B cold email copywriter. Write a 45-word polite "breakup / closing the file" email from "${settings.senderName}" of "${settings.businessName}" to "${activeLead.firstName}" at "${activeLead.firmName}".
+Context: Followed up twice with no response.
+Goal: Politely assume this isn't a priority right now, promise not to clutter their inbox, leave the link (${settings.productUrl}) if they ever need assistance with ${settings.valueProp}. Wish them success.
+Strict Rules: Under 50 words, warm and professional.
+Format strictly:
+SUBJECT: closing the loop / ${activeLead.firmName}
+BODY:
+[body]`;
+    } else {
+      // Initial pitch for custom business
+      promptText = `You are an elite B2B cold email copywriter. Write a concise, hyper-personalized, non-spammy cold outreach email from "${settings.senderName}" representing "${settings.businessName}" (${settings.productUrl}) to "${activeLead.firstName}" at "${activeLead.firmName}".
+
+Target Info:
+- Company / Firm: ${activeLead.firmName}
+- Contact Name: ${activeLead.firstName}
+- Location: ${activeLead.location || "USA"}
+- Context / Observation: ${activeLead.personalHook}
+
+Our Business: ${settings.businessName} (${settings.productUrl})
+What We Solve: ${settings.valueProp}
+Our Offer / Call-To-Action: ${settings.offer}
+
+Strict Rules:
+- Keep the email body under 85 words.
+- NO cheesy AI clichés (no "hope this email finds you well", no "in today's fast-paced digital world", no "supercharge your workflow").
+- Sound authentic, peer-to-peer, and focused on direct value.
+- Output strictly in this exact format:
+SUBJECT: [short lowercase subject]
+BODY:
+[complete email body]`;
+    }
   }
 
   try {
@@ -851,14 +1057,28 @@ async function generateMockupWithImagen() {
   if (loadingArea) loadingArea.style.display = "flex";
 
   // Formulate hyper-detailed prompt matching firm branding and chosen concept
+  const isSmartRename = (settings.businessName || "").toLowerCase().includes("smartrename");
   let promptText = "";
-  if (concept === "videoThumb") {
-    promptText = `A hyper-realistic, sleek B2B SaaS video demo thumbnail graphic for '${activeLead.firmName}'. In the center, a glowing frosted glass play button with text reading '30-Sec Demo for ${activeLead.firstName} at ${activeLead.firmName}'. In the background, a modern dark cybernetic interface showing automated document renaming and client folder sorting. Color palette has subtle neon cyan and deep violet accents, dark mode glassmorphism UI, 8k resolution, photorealistic cinematic lighting, crisp professional graphic design.`;
-  } else if (concept === "portalDashboard") {
-    promptText = `A high-tech, futuristic dark-mode SaaS dashboard interface branded for '${activeLead.firmName}' in ${activeLead.location || 'USA'}. It shows 50 disorganized incoming client invoices and receipt scans being automatically analyzed, extracted, and filed into structured client folders. Glowing cyan progress bars, purple status tags, clean modern typography, sleek glass panels, high resolution 8K render.`;
+
+  if (isSmartRename) {
+    if (concept === "videoThumb") {
+      promptText = `A hyper-realistic, sleek B2B SaaS video demo thumbnail graphic for '${activeLead.firmName}'. In the center, a glowing frosted glass play button with text reading '30-Sec Demo for ${activeLead.firstName} at ${activeLead.firmName}'. In the background, a modern dark cybernetic interface showing automated document renaming and client folder sorting. Color palette has subtle neon cyan and deep violet accents, dark mode glassmorphism UI, 8k resolution, photorealistic cinematic lighting, crisp professional graphic design.`;
+    } else if (concept === "portalDashboard") {
+      promptText = `A high-tech, futuristic dark-mode SaaS dashboard interface branded for '${activeLead.firmName}' in ${activeLead.location || 'USA'}. It shows 50 disorganized incoming client invoices and receipt scans being automatically analyzed, extracted, and filed into structured client folders. Glowing cyan progress bars, purple status tags, clean modern typography, sleek glass panels, high resolution 8K render.`;
+    } else {
+      // Before & After (Default)
+      promptText = `A photorealistic split-screen visual comparison tailored for '${activeLead.firmName}' in ${activeLead.location || 'USA'}. On the left: a cluttered office desk with crumpled chaotic paper receipts and unorganized PDF scans with messy filenames like 'scan_0042.pdf' and 'IMG_9102.jpg'. On the right: a modern, ultra-clean digital workspace screen showing SmartRename AI folder hierarchy branded for '${activeLead.firmName}', showing cleanly standardized files like '2026-09-11_Adobe_INV-9821.pdf'. Dark mode aesthetic, neon cyan and purple ambient glow, professional B2B product mockup, 8K resolution, crisp graphic design.`;
+    }
   } else {
-    // Before & After (Default)
-    promptText = `A photorealistic split-screen visual comparison tailored for '${activeLead.firmName}' in ${activeLead.location || 'USA'}. On the left: a cluttered office desk with crumpled chaotic paper receipts and unorganized PDF scans with messy filenames like 'scan_0042.pdf' and 'IMG_9102.jpg'. On the right: a modern, ultra-clean digital workspace screen showing SmartRename AI folder hierarchy branded for '${activeLead.firmName}', showing cleanly standardized files like '2026-09-11_Adobe_INV-9821.pdf'. Dark mode aesthetic, neon cyan and purple ambient glow, professional B2B product mockup, 8K resolution, crisp graphic design.`;
+    // Dynamic Mockup for ANY business profile (Web Agency, SEO, Consulting, etc.)
+    if (concept === "videoThumb") {
+      promptText = `A hyper-realistic, sleek B2B presentation video thumbnail graphic branded for '${activeLead.firmName}'. In the center, a glowing frosted glass play button with crisp typography reading 'Brief Demo for ${activeLead.firstName} at ${activeLead.firmName}'. In the background, a modern dark executive dashboard illustrating '${settings.valueProp}'. Color palette with subtle neon cyan accents, glassmorphism UI, 8k resolution, cinematic lighting, crisp professional graphic design.`;
+    } else if (concept === "portalDashboard") {
+      promptText = `A modern, futuristic executive dashboard interface custom tailored for '${activeLead.firmName}' in ${activeLead.location || 'USA'}. Branded with '${settings.businessName}' technology, displaying clean data cards and high-performance metrics for '${settings.valueProp}'. Glowing cyan and violet UI elements, sleek dark mode glass panels, clean typography, 8K render.`;
+    } else {
+      // Before & After (Default)
+      promptText = `A photorealistic split-screen visual transformation tailored for '${activeLead.firmName}' in ${activeLead.location || 'USA'}. On the left: a frustrating, outdated, chaotic business operation workflow with red bottleneck alerts. On the right: an ultra-sleek, modern, automated solution powered by ${settings.businessName}, showing high productivity and '${settings.valueProp}'. Dark mode aesthetic, neon ambient glow, crisp professional B2B presentation mockup, 8K resolution.`;
+    }
   }
 
   try {
@@ -926,7 +1146,7 @@ function insertMockupNoteIntoEmail() {
   const bodyEl = document.getElementById("drafterBody");
   if (!bodyEl) return;
   
-  const note = `\n\nP.S. I put together a quick visual preview of what ${activeLead.firmName}'s automated document cleanup looks like—see the attached image!`;
+  const note = `\n\nP.S. I put together a quick visual preview of what ${activeLead.firmName}'s workflow looks like with ${settings.businessName}—see the attached image!`;
   if (!bodyEl.value.includes("P.S. I put together a quick visual preview")) {
     bodyEl.value = bodyEl.value.trim() + note;
     showToast("P.S. image attachment note added to email! 📎");
@@ -1108,7 +1328,11 @@ async function runScoutWithGemini() {
   const country = document.getElementById("scoutCountry").value.trim() || "Nigeria";
   const state = document.getElementById("scoutState").value.trim() || "Lagos";
   const lga = document.getElementById("scoutLga").value.trim() || "Ikeja";
-  const niche = document.getElementById("scoutNiche").value;
+  let niche = document.getElementById("scoutNiche").value;
+  if (niche === "custom") {
+    const customVal = document.getElementById("scoutNicheCustom")?.value.trim();
+    niche = customVal || settings.targetNiche || "local businesses";
+  }
   const count = parseInt(document.getElementById("scoutCount").value, 10) || 3;
 
   const btn = document.getElementById("btnRunScout");
@@ -1455,12 +1679,39 @@ function setupEventListeners() {
     });
   }
 
-  // Settings
+  // Scout Niche custom toggle
+  const scoutNicheSelect = document.getElementById("scoutNiche");
+  const scoutNicheCustom = document.getElementById("scoutNicheCustom");
+  if (scoutNicheSelect && scoutNicheCustom) {
+    scoutNicheSelect.addEventListener("change", (e) => {
+      scoutNicheCustom.style.display = e.target.value === "custom" ? "block" : "none";
+    });
+  }
+
+  // Settings & Business Profiles
   document.getElementById("btnSettings").addEventListener("click", openSettingsModal);
   document.getElementById("btnCloseSettings").addEventListener("click", closeSettingsModal);
-  document.getElementById("settingsSenderName").addEventListener("change", saveSettings);
-  document.getElementById("settingsProductUrl").addEventListener("change", saveSettings);
-  document.getElementById("settingsGeminiKey").addEventListener("change", saveSettings);
+  
+  const profileSelect = document.getElementById("settingsProfileSelect");
+  if (profileSelect) {
+    profileSelect.addEventListener("change", handleProfilePresetChange);
+  }
+
+  const btnSaveSettingsManual = document.getElementById("btnSaveSettingsManual");
+  if (btnSaveSettingsManual) {
+    btnSaveSettingsManual.addEventListener("click", () => {
+      saveSettings();
+      closeSettingsModal();
+    });
+  }
+
+  document.getElementById("settingsBusinessName")?.addEventListener("change", saveSettings);
+  document.getElementById("settingsSenderName")?.addEventListener("change", saveSettings);
+  document.getElementById("settingsProductUrl")?.addEventListener("change", saveSettings);
+  document.getElementById("settingsValueProp")?.addEventListener("change", saveSettings);
+  document.getElementById("settingsOffer")?.addEventListener("change", saveSettings);
+  document.getElementById("settingsGeminiKey")?.addEventListener("change", saveSettings);
+
   document.getElementById("btnExportData").addEventListener("click", exportData);
   document.getElementById("inputImportFile").addEventListener("change", importData);
   document.getElementById("btnResetDefaults").addEventListener("click", resetToDefaults);

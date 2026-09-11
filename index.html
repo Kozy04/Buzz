@@ -37,7 +37,7 @@
         </div>
         <div class="brand-text">
           <h1>Buzz <span class="badge-mini">Outreach</span></h1>
-          <p class="brand-sub">SmartRename AI Pipeline</p>
+          <p id="headerBrandSub" class="brand-sub">SmartRename AI Pipeline</p>
         </div>
       </div>
       <div class="header-actions">
@@ -361,15 +361,43 @@
       </div>
 
       <div class="modal-body settings-list">
-        <!-- Sender Profile -->
+        <!-- Business Profile Preset Switcher -->
         <div class="settings-group">
-          <label class="input-label" for="settingsSenderName">Your Name / Title</label>
-          <input type="text" id="settingsSenderName" class="text-input" value="Founder, SmartRename AI" />
+          <label class="input-label" for="settingsProfileSelect">Active Business / Campaign Profile</label>
+          <select id="settingsProfileSelect" class="text-input select-input">
+            <option value="smartrename" selected>SmartRename AI (SaaS / Bookkeeping)</option>
+            <option value="agency">Web Design & Digital Agency</option>
+            <option value="seo">SEO & B2B Growth Agency</option>
+            <option value="consulting">Consulting & Professional Services</option>
+            <option value="custom">-- Custom Business / White-Label --</option>
+          </select>
+        </div>
+
+        <!-- Business & Product Identity -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="input-label" for="settingsBusinessName">Business / Product Name *</label>
+            <input type="text" id="settingsBusinessName" class="text-input" value="SmartRename AI" placeholder="e.g. SmartRename AI" required />
+          </div>
+          <div class="form-group">
+            <label class="input-label" for="settingsSenderName">Your Name & Title *</label>
+            <input type="text" id="settingsSenderName" class="text-input" value="Founder, SmartRename AI" placeholder="e.g. Sarah, Founder" required />
+          </div>
         </div>
 
         <div class="settings-group">
-          <label class="input-label" for="settingsProductUrl">SmartRename AI Product URL</label>
-          <input type="text" id="settingsProductUrl" class="text-input" value="https://smartrenameai.online" />
+          <label class="input-label" for="settingsProductUrl">Website / Product URL *</label>
+          <input type="text" id="settingsProductUrl" class="text-input" value="https://smartrenameai.online" placeholder="https://..." required />
+        </div>
+
+        <div class="settings-group">
+          <label class="input-label" for="settingsValueProp">What Problem You Solve (Value Proposition) *</label>
+          <textarea id="settingsValueProp" class="textarea-input" rows="3" placeholder="e.g. Eliminates hours of manual document sorting by using vision AI to auto-rename receipts, statements, and invoices...">Eliminates hours of manual document sorting by using vision AI to auto-rename receipts, statements, and invoices and build clean client folders in seconds.</textarea>
+        </div>
+
+        <div class="settings-group">
+          <label class="input-label" for="settingsOffer">Core Offer / Call-To-Action *</label>
+          <input type="text" id="settingsOffer" class="text-input" value="Process 15-20 of your messiest sample client files for free in 5 minutes so you can see the speed" placeholder="e.g. Free 15-min discovery audit, 14-day free pilot..." required />
         </div>
 
         <div class="settings-group">
@@ -382,6 +410,10 @@
             🔒 Stored locally in your device's browser only. Never saved to GitHub.
           </span>
         </div>
+
+        <button id="btnSaveSettingsManual" type="button" class="btn-primary" style="width: 100%; margin-top: 4px; margin-bottom: 12px;">
+          ✓ Save Profile & Settings
+        </button>
 
         <hr class="settings-divider" />
 
@@ -408,11 +440,11 @@
         </div>
 
         <button id="btnResetDefaults" class="btn-danger-outline">
-          Reset to Default 10 Bookkeeper Leads
+          Reset to Default Sample Leads
         </button>
 
         <div class="app-version-tag">
-          Buzz Mobile PWA v1.0.0 • Offline Ready
+          Buzz Mobile PWA v1.0.0 • Multi-Business Edition
         </div>
       </div>
     </div>
@@ -455,7 +487,9 @@
             <option value="Construction & Subcontractors">Construction & Subcontractors</option>
             <option value="Medical & Dental Clinics">Medical & Dental Clinics</option>
             <option value="Digital Marketing & Creative Studios">Digital Marketing & Creative Studios</option>
+            <option value="custom">-- Custom Industry / Niche (Type Below) --</option>
           </select>
+          <input type="text" id="scoutNicheCustom" class="text-input" style="display: none; margin-top: 8px;" placeholder="e.g. Roofing Contractors, Chiropractors, Fitness Gyms, Shopify Brands" />
         </div>
 
         <div class="form-row">
