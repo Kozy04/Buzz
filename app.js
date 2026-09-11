@@ -579,6 +579,14 @@ function openDrafter(lead) {
     pill.classList.toggle("active", parseInt(pill.dataset.days, 10) === selectedFollowUpScheduleDays);
   });
 
+  // Reset Mockup Generator state
+  const mockupPreview = document.getElementById("mockupPreviewArea");
+  if (mockupPreview) mockupPreview.style.display = "none";
+  const mockupLoading = document.getElementById("mockupLoadingArea");
+  if (mockupLoading) mockupLoading.style.display = "none";
+  const mockupError = document.getElementById("mockupErrorArea");
+  if (mockupError) mockupError.style.display = "none";
+
   updateCadenceIndicator();
   updateDrafterContent();
   updateDrafterStatusPills(lead.status);
@@ -792,6 +800,139 @@ function fallbackCopy(text) {
   document.execCommand("copy");
   document.body.removeChild(ta);
   showToast("Email text copied!");
+}
+
+// ==========================================
+// Visual Pitch Mockup Generator (Google Imagen 3)
+// ==========================================
+let currentMockupBase64 = null;
+
+function toggleMockupArea() {
+  const content = document.getElementById("mockupContentArea");
+  const chevron = document.getElementById("mockupChevron");
+  if (!content) return;
+  const isHidden = content.style.display === "none";
+  content.style.display = isHidden ? "block" : "none";
+  if (chevron) {
+    chevron.textContent = isHidden ? "▴ Collapse" : "▾ Expand";
+  }
+}
+
+async function generateMockupWithImagen() {
+  if (!activeLead) return;
+
+  const apiKey = settings.geminiApiKey;
+  const errorArea = document.getElementById("mockupErrorArea");
+  const errorMsg = document.getElementById("mockupErrorMsg");
+  const loadingArea = document.getElementById("mockupLoadingArea");
+  const previewArea = document.getElementById("mockupPreviewArea");
+  const imgResult = document.getElementById("mockupImgResult");
+  const btn = document.getElementById("btnGenerateMockup");
+  const btnText = document.getElementById("mockupBtnText");
+  const downloadBtn = document.getElementById("btnDownloadMockup");
+
+  if (errorArea) errorArea.style.display = "none";
+  if (previewArea) previewArea.style.display = "none";
+
+  if (!apiKey) {
+    if (errorArea && errorMsg) {
+      errorMsg.textContent = "Please add your Gemini API Key in Settings (⚙️) to generate images with Imagen 3.";
+      errorArea.style.display = "flex";
+    }
+    showToast("Please enter your Gemini API Key in Settings (⚙️)");
+    openSettingsModal();
+    return;
+  }
+
+  const concept = document.getElementById("mockupConceptSelect")?.value || "beforeAfter";
+  const originalText = btnText.textContent;
+  btn.disabled = true;
+  btnText.textContent = "Generating with Imagen 3...";
+  if (loadingArea) loadingArea.style.display = "flex";
+
+  // Formulate hyper-detailed prompt matching firm branding and chosen concept
+  let promptText = "";
+  if (concept === "videoThumb") {
+    promptText = `A hyper-realistic, sleek B2B SaaS video demo thumbnail graphic for '${activeLead.firmName}'. In the center, a glowing frosted glass play button with text reading '30-Sec Demo for ${activeLead.firstName} at ${activeLead.firmName}'. In the background, a modern dark cybernetic interface showing automated document renaming and client folder sorting. Color palette has subtle neon cyan and deep violet accents, dark mode glassmorphism UI, 8k resolution, photorealistic cinematic lighting, crisp professional graphic design.`;
+  } else if (concept === "portalDashboard") {
+    promptText = `A high-tech, futuristic dark-mode SaaS dashboard interface branded for '${activeLead.firmName}' in ${activeLead.location || 'USA'}. It shows 50 disorganized incoming client invoices and receipt scans being automatically analyzed, extracted, and filed into structured client folders. Glowing cyan progress bars, purple status tags, clean modern typography, sleek glass panels, high resolution 8K render.`;
+  } else {
+    // Before & After (Default)
+    promptText = `A photorealistic split-screen visual comparison tailored for '${activeLead.firmName}' in ${activeLead.location || 'USA'}. On the left: a cluttered office desk with crumpled chaotic paper receipts and unorganized PDF scans with messy filenames like 'scan_0042.pdf' and 'IMG_9102.jpg'. On the right: a modern, ultra-clean digital workspace screen showing SmartRename AI folder hierarchy branded for '${activeLead.firmName}', showing cleanly standardized files like '2026-09-11_Adobe_INV-9821.pdf'. Dark mode aesthetic, neon cyan and purple ambient glow, professional B2B product mockup, 8K resolution, crisp graphic design.`;
+  }
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        instances: [{ prompt: promptText }],
+        parameters: {
+          sampleCount: 1,
+          aspectRatio: "16:9",
+          outputMimeType: "image/jpeg"
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({}));
+      const msg = errJson?.error?.message || `Imagen 3 error: ${response.status}`;
+      throw new Error(msg);
+    }
+
+    const data = await response.json();
+    const base64Data = data.predictions?.[0]?.bytesBase64Encoded;
+    const mimeType = data.predictions?.[0]?.mimeType || "image/jpeg";
+
+    if (!base64Data) {
+      throw new Error("No image data returned from Imagen 3");
+    }
+
+    currentMockupBase64 = `data:${mimeType};base64,${base64Data}`;
+    if (imgResult) imgResult.src = currentMockupBase64;
+    
+    // Set download link
+    if (downloadBtn) {
+      downloadBtn.href = currentMockupBase64;
+      const cleanFirm = (activeLead.firmName || "lead").toLowerCase().replace(/[^a-z0-9]/g, "_");
+      downloadBtn.download = `${cleanFirm}_workflow_mockup.jpg`;
+    }
+
+    if (loadingArea) loadingArea.style.display = "none";
+    if (previewArea) previewArea.style.display = "block";
+    showToast("Branded mockup generated with Imagen 3! 🎨");
+  } catch (err) {
+    console.error("Imagen 3 Error:", err);
+    if (loadingArea) loadingArea.style.display = "none";
+    if (errorArea && errorMsg) {
+      const isLeaked = err.message.includes("leaked") || err.message.includes("PERMISSION_DENIED");
+      errorMsg.textContent = isLeaked
+        ? "API key was flagged or disabled. Please update your key in Settings (⚙️)."
+        : `Image generation failed: ${err.message}`;
+      errorArea.style.display = "flex";
+    }
+    showToast(`Image gen error: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = originalText;
+  }
+}
+
+function insertMockupNoteIntoEmail() {
+  if (!activeLead) return;
+  const bodyEl = document.getElementById("drafterBody");
+  if (!bodyEl) return;
+  
+  const note = `\n\nP.S. I put together a quick visual preview of what ${activeLead.firmName}'s automated document cleanup looks like—see the attached image!`;
+  if (!bodyEl.value.includes("P.S. I put together a quick visual preview")) {
+    bodyEl.value = bodyEl.value.trim() + note;
+    showToast("P.S. image attachment note added to email! 📎");
+  } else {
+    showToast("Note already present in email body.");
+  }
 }
 
 // Status Management
@@ -1270,6 +1411,16 @@ function setupEventListeners() {
       }
     });
   });
+
+  // Visual Mockup Generator
+  const btnToggleMockup = document.getElementById("btnToggleMockup");
+  if (btnToggleMockup) btnToggleMockup.addEventListener("click", toggleMockupArea);
+
+  const btnGenerateMockup = document.getElementById("btnGenerateMockup");
+  if (btnGenerateMockup) btnGenerateMockup.addEventListener("click", generateMockupWithImagen);
+
+  const btnInsertMockupNote = document.getElementById("btnInsertMockupNote");
+  if (btnInsertMockupNote) btnInsertMockupNote.addEventListener("click", insertMockupNoteIntoEmail);
 
   // Add / Edit Lead
   document.getElementById("btnAddLead").addEventListener("click", openAddLeadModal);

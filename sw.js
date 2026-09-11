@@ -1,4 +1,4 @@
-const CACHE_NAME = "buzz-pwa-v7";
+const CACHE_NAME = "buzz-pwa-v8";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",

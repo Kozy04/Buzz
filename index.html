@@ -169,6 +169,74 @@
         </div>
         <textarea id="drafterBody" class="textarea-input" rows="11"></textarea>
 
+        <!-- Visual Mockup Pitch Generator (Google Imagen 3) -->
+        <div class="mockup-generator-box">
+          <div class="mockup-header-row" id="btnToggleMockup">
+            <div class="mockup-title-group">
+              <span class="mockup-icon">🎨</span>
+              <div>
+                <strong class="mockup-title">Visual Pitch Mockup</strong>
+                <span class="mockup-subtitle">Google Imagen 3 • Branded Workflow Preview</span>
+              </div>
+            </div>
+            <span id="mockupChevron" class="mockup-chevron">▾ Expand</span>
+          </div>
+
+          <div id="mockupContentArea" class="mockup-content-area" style="display: none;">
+            <div class="form-group" style="margin-top: 10px; margin-bottom: 10px;">
+              <label class="input-label" for="mockupConceptSelect">Mockup Visual Concept</label>
+              <select id="mockupConceptSelect" class="text-input select-input" style="font-size: 12px; padding: 7px 10px;">
+                <option value="beforeAfter" selected>Before & After: Chaotic Receipts ➔ Clean Branded Folders</option>
+                <option value="videoThumb">Personalized 45s Video Demo Player ("Specially for Firm")</option>
+                <option value="portalDashboard">Dark Cyber SaaS Portal Sorting Client Statement Batches</option>
+              </select>
+            </div>
+
+            <button id="btnGenerateMockup" type="button" class="btn-generate-mockup">
+              <span class="ai-sparkle">✨</span>
+              <span id="mockupBtnText">Generate Branded Image with Imagen 3</span>
+            </button>
+
+            <!-- Loading Indicator -->
+            <div id="mockupLoadingArea" class="mockup-loading-box" style="display: none;">
+              <div class="scout-spinner" style="width: 22px; height: 22px; border-width: 2.5px;"></div>
+              <div class="mockup-loading-text">
+                <span id="mockupLoadingTitle" class="mockup-loading-title">Generating Brand Mockup...</span>
+                <span id="mockupLoadingSub" class="mockup-loading-sub">Rendering via Google Imagen 3</span>
+              </div>
+            </div>
+
+            <!-- Error Feedback -->
+            <div id="mockupErrorArea" class="mockup-error-box" style="display: none;">
+              <span class="mockup-error-icon">⚠️</span>
+              <span id="mockupErrorMsg" class="mockup-error-msg"></span>
+            </div>
+
+            <!-- Preview Result Area -->
+            <div id="mockupPreviewArea" class="mockup-preview-area" style="display: none;">
+              <div class="mockup-img-frame">
+                <img id="mockupImgResult" class="mockup-img" src="" alt="Branded Pitch Mockup" />
+              </div>
+              <div class="mockup-actions-row">
+                <a id="btnDownloadMockup" download="buzz-pitch-mockup.jpg" href="#" class="btn-mockup-action btn-mockup-download">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>Download Image</span>
+                </a>
+                <button id="btnInsertMockupNote" type="button" class="btn-mockup-action btn-mockup-insert">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                  </svg>
+                  <span>Insert Note into Email</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Follow-Up Schedule Setting -->
         <div class="followup-schedule-container">
           <div class="schedule-header-row">
