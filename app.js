@@ -1094,7 +1094,7 @@ async function generateMockupWithImagen() {
 
   if (!apiKey) {
     if (errorArea && errorMsg) {
-      errorMsg.textContent = "Please add your Gemini API Key in Settings (⚙️) to generate images with Imagen 3.";
+      errorMsg.textContent = "Please add your Gemini API Key in Settings (⚙️) to generate visual mockups.";
       errorArea.style.display = "flex";
     }
     showToast("Please enter your Gemini API Key in Settings (⚙️)");
@@ -1105,131 +1105,424 @@ async function generateMockupWithImagen() {
   const concept = document.getElementById("mockupConceptSelect")?.value || "beforeAfter";
   const originalText = btnText.textContent;
   btn.disabled = true;
-  btnText.textContent = "Generating with Imagen 3...";
+  btnText.textContent = "Crafting branded visual...";
   if (loadingArea) loadingArea.style.display = "flex";
 
-  // Formulate hyper-detailed prompt matching firm branding and chosen concept
   const isSmartRename = (settings.businessName || "").toLowerCase().includes("smartrename");
-  let promptText = "";
+  const cleanFirm = (activeLead.firmName || "lead").toLowerCase().replace(/[^a-z0-9]/g, "_");
 
+  // Formulate SVG prompt tailored to active lead and chosen concept
+  let svgPrompt = "";
   if (isSmartRename) {
     if (concept === "videoThumb") {
-      promptText = `A hyper-realistic, sleek B2B SaaS video demo thumbnail graphic for '${activeLead.firmName}'. In the center, a glowing frosted glass play button with text reading '30-Sec Demo for ${activeLead.firstName} at ${activeLead.firmName}'. In the background, a modern dark cybernetic interface showing automated document renaming and client folder sorting. Color palette has subtle neon cyan and deep violet accents, dark mode glassmorphism UI, 8k resolution, photorealistic cinematic lighting, crisp professional graphic design.`;
+      svgPrompt = `Generate a sleek, dark-mode 16:9 presentation graphic as raw SVG code (width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg") for "${activeLead.firmName}".
+Concept: A premium video demo preview card. In the center, a glowing frosted-glass play button with text "30-Sec Demo for ${activeLead.firstName || "Team"} at ${activeLead.firmName}".
+Background: Dark cyber obsidian (#080B11), ambient cyan (#00F0FF) and purple (#8B5CF6) glowing blur orbs. Shows clean automated document processing badges, "SmartRename AI Vision", and 85% time-savings tag.
+Style: Premium typography, glassmorphic cards, modern tech aesthetic.
+IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. Do NOT wrap in markdown code blocks, do not include explanations.`;
     } else if (concept === "portalDashboard") {
-      promptText = `A high-tech, futuristic dark-mode SaaS dashboard interface branded for '${activeLead.firmName}' in ${activeLead.location || 'USA'}. It shows 50 disorganized incoming client invoices and receipt scans being automatically analyzed, extracted, and filed into structured client folders. Glowing cyan progress bars, purple status tags, clean modern typography, sleek glass panels, high resolution 8K render.`;
+      svgPrompt = `Generate a sleek, dark-mode 16:9 presentation graphic as raw SVG code (width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg") for "${activeLead.firmName}" in ${activeLead.location || "USA"}.
+Concept: A futuristic SaaS client document portal branded for "${activeLead.firmName}". Shows file extraction cards, OCR detection tags (Vendor, Date, Amount), glowing progress bar (50/50 files organized), and automated client folder queue.
+Style: Dark obsidian (#080B11) background, neon cyan (#00F0FF) and violet (#8B5CF6) accents, glassmorphic panels, crisp modern typography.
+IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. Do NOT wrap in markdown code blocks, do not include explanations.`;
     } else {
       // Before & After (Default)
-      promptText = `A photorealistic split-screen visual comparison tailored for '${activeLead.firmName}' in ${activeLead.location || 'USA'}. On the left: a cluttered office desk with crumpled chaotic paper receipts and unorganized PDF scans with messy filenames like 'scan_0042.pdf' and 'IMG_9102.jpg'. On the right: a modern, ultra-clean digital workspace screen showing SmartRename AI folder hierarchy branded for '${activeLead.firmName}', showing cleanly standardized files like '2026-09-11_Adobe_INV-9821.pdf'. Dark mode aesthetic, neon cyan and purple ambient glow, professional B2B product mockup, 8K resolution, crisp graphic design.`;
+      svgPrompt = `Generate a sleek, dark-mode 16:9 presentation graphic as raw SVG code (width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg") for "${activeLead.firmName}".
+Concept: Split-screen transformation comparison.
+- Left side: "BEFORE: Chaotic Client Files" with red-tinted glass card showing messy filenames like 'scan_0042.pdf', 'IMG_9102.jpg', 'receipt_coffee.pdf'.
+- Center: glowing neon cyan arrow or transition badge.
+- Right side: "AFTER: SmartRename AI" with electric cyan/emerald card showing organized client hierarchy: '📁 Clients / Apex / 2026-09-11_Adobe_INV-891.pdf', '📁 Clients / Beacon / 2026-09-11_Staples_RCP-102.pdf'.
+Style: Dark obsidian (#080B11) background, glowing ambient circles, clean sans-serif typography, glassmorphism.
+IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. Do NOT wrap in markdown code blocks, do not include explanations.`;
     }
   } else {
-    // Dynamic Mockup for ANY business profile (Web Agency, SEO, Consulting, etc.)
+    // Custom business profile
     if (concept === "videoThumb") {
-      promptText = `A hyper-realistic, sleek B2B presentation video thumbnail graphic branded for '${activeLead.firmName}'. In the center, a glowing frosted glass play button with crisp typography reading 'Brief Demo for ${activeLead.firstName} at ${activeLead.firmName}'. In the background, a modern dark executive dashboard illustrating '${settings.valueProp}'. Color palette with subtle neon cyan accents, glassmorphism UI, 8k resolution, cinematic lighting, crisp professional graphic design.`;
+      svgPrompt = `Generate a sleek, dark-mode 16:9 presentation graphic as raw SVG code (width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg") for "${activeLead.firmName}".
+Concept: Video pitch player card with glowing play button reading "Brief Demo for ${activeLead.firstName || "Team"} at ${activeLead.firmName}". Illustrating ${settings.businessName} and "${settings.valueProp}".
+Style: Deep dark obsidian (#080B11) background, cyan and purple accents, glassmorphism.
+IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. No markdown fences.`;
     } else if (concept === "portalDashboard") {
-      promptText = `A modern, futuristic executive dashboard interface custom tailored for '${activeLead.firmName}' in ${activeLead.location || 'USA'}. Branded with '${settings.businessName}' technology, displaying clean data cards and high-performance metrics for '${settings.valueProp}'. Glowing cyan and violet UI elements, sleek dark mode glass panels, clean typography, 8K render.`;
+      svgPrompt = `Generate a sleek, dark-mode 16:9 presentation graphic as raw SVG code (width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg") for "${activeLead.firmName}".
+Concept: Modern executive analytics dashboard branded for "${activeLead.firmName}" powered by ${settings.businessName}. Data cards demonstrating "${settings.valueProp}".
+Style: Dark background, glowing accents, clean glass panels.
+IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. No markdown fences.`;
     } else {
-      // Before & After (Default)
-      promptText = `A photorealistic split-screen visual transformation tailored for '${activeLead.firmName}' in ${activeLead.location || 'USA'}. On the left: a frustrating, outdated, chaotic business operation workflow with red bottleneck alerts. On the right: an ultra-sleek, modern, automated solution powered by ${settings.businessName}, showing high productivity and '${settings.valueProp}'. Dark mode aesthetic, neon ambient glow, crisp professional B2B presentation mockup, 8K resolution.`;
+      svgPrompt = `Generate a sleek, dark-mode 16:9 presentation graphic as raw SVG code (width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg") for "${activeLead.firmName}".
+Concept: Split-screen visual transformation. Left: "BEFORE" manual workflow bottlenecks. Right: "AFTER: ${settings.businessName}" automated high-efficiency solution for "${settings.valueProp}".
+Style: Deep dark obsidian (#080B11) background, glowing cyan and purple accents, glassmorphic cards.
+IMPORTANT: Return ONLY valid <svg ...> ... </svg> code. No markdown fences.`;
     }
   }
 
-  const candidateModels = [
-    "imagen-4.0-generate-001",
-    "imagen-4.0-fast-generate-001",
-    "imagen-3.0-generate-001"
-  ];
-
-  let lastError = null;
-  let base64Data = null;
-  let mimeType = "image/jpeg";
-  let usedModel = "";
+  let generatedDataUrl = null;
+  let usedEngine = "";
 
   try {
-    for (const modelName of candidateModels) {
-      try {
-        btnText.textContent = `Rendering with ${modelName}...`;
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:predict?key=${apiKey}`, {
+    // TIER 1: Gemini 2.5 Flash Dynamic Vector Visualizer (SVG)
+    try {
+      btnText.textContent = "Synthesizing custom visual (Gemini)...";
+      const payload = {
+        contents: [{ parts: [{ text: svgPrompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 8192,
+          thinkingConfig: { thinkingBudget: 0 }
+        }
+      };
+
+      let response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok && response.status === 400) {
+        delete payload.generationConfig.thinkingConfig;
+        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": apiKey
-          },
-          body: JSON.stringify({
-            instances: [{ prompt: promptText }],
-            parameters: {
-              sampleCount: 1,
-              aspectRatio: "16:9"
-            }
-          })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         });
+      }
 
-        if (!response.ok) {
-          const errJson = await response.json().catch(() => ({}));
-          const msg = errJson?.error?.message || `Status ${response.status}`;
-          lastError = new Error(msg);
-          
-          if (msg.includes("leaked") || msg.includes("PERMISSION_DENIED") || msg.includes("API key not valid")) {
-            throw lastError;
-          }
-          console.warn(`Model ${modelName} returned: ${msg}. Trying next candidate model...`);
-          continue;
-        }
-
+      if (response.ok) {
         const data = await response.json();
-        const pred = data.predictions?.[0] || data.generatedImages?.[0] || data.images?.[0];
-        base64Data = pred?.bytesBase64Encoded || pred?.imageBytes || pred?.image?.imageBytes || (typeof pred === "string" ? pred : null);
-        mimeType = pred?.mimeType || pred?.image?.mimeType || "image/jpeg";
+        const rawText = data.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("") || "";
+        const svgMatch = rawText.match(/<svg[\s\S]*<\/svg>/i);
+        if (svgMatch && svgMatch[0]) {
+          const converted = await svgToJpeg(svgMatch[0], 1280, 720);
+          generatedDataUrl = converted.dataUrl;
+          usedEngine = "Gemini AI Vector (1280x720)";
+        }
+      }
+    } catch (geminiErr) {
+      console.warn("Gemini SVG generation failed, falling back:", geminiErr);
+    }
 
-        if (base64Data) {
-          usedModel = modelName;
-          break;
+    // TIER 2: Pollinations AI (Flux / SDXL Photorealistic) Fallback
+    if (!generatedDataUrl) {
+      try {
+        btnText.textContent = "Rendering photorealistic visual...";
+        const pollPrompt = `A photorealistic 16:9 split-screen B2B presentation mockup tailored for '${activeLead.firmName}' in ${activeLead.location || 'USA'}. Dark mode obsidian aesthetic, neon cyan and purple ambient glow, showing ${settings.businessName} automated workflow, 8k resolution, crisp graphic design.`;
+        const pollUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(pollPrompt)}?width=1280&height=720&nologo=true&seed=${Date.now()}`;
+        
+        const pollResp = await fetch(pollUrl);
+        if (pollResp.ok) {
+          const blob = await pollResp.blob();
+          generatedDataUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          usedEngine = "AI Vision / Flux (1280x720)";
         }
-      } catch (err) {
-        lastError = err;
-        if (err.message.includes("leaked") || err.message.includes("PERMISSION_DENIED") || err.message.includes("API key not valid")) {
-          throw err;
-        }
+      } catch (pollErr) {
+        console.warn("Pollinations AI fetch failed, falling back:", pollErr);
       }
     }
 
-    if (!base64Data) {
-      throw lastError || new Error("No image data returned from Google Imagen service.");
+    // TIER 3: Guaranteed Instant Client-Side HTML5 Canvas Fallback
+    if (!generatedDataUrl) {
+      btnText.textContent = "Composing local visual...";
+      generatedDataUrl = generateCanvasMockup(activeLead.firmName, activeLead.firstName, activeLead.location, concept, settings.businessName, settings.valueProp);
+      usedEngine = "High-Res Canvas Visualizer (1280x720)";
     }
 
-    currentMockupBase64 = `data:${mimeType};base64,${base64Data}`;
+    currentMockupBase64 = generatedDataUrl;
     if (imgResult) imgResult.src = currentMockupBase64;
-    
-    // Set download link
+
     if (downloadBtn) {
       downloadBtn.href = currentMockupBase64;
-      const cleanFirm = (activeLead.firmName || "lead").toLowerCase().replace(/[^a-z0-9]/g, "_");
       downloadBtn.download = `${cleanFirm}_workflow_mockup.jpg`;
     }
 
     if (loadingArea) loadingArea.style.display = "none";
     if (previewArea) previewArea.style.display = "block";
-    showToast(`Branded mockup generated with ${usedModel || "Imagen 4"}! 🎨`);
+    showToast(`Branded mockup ready via ${usedEngine}! 🎨`);
   } catch (err) {
-    console.error("Imagen Error:", err);
-    if (loadingArea) loadingArea.style.display = "none";
-    if (errorArea && errorMsg) {
-      const isLeaked = err.message.includes("leaked") || err.message.includes("PERMISSION_DENIED") || err.message.includes("API key not valid");
-      const isNotFound = err.message.includes("not found") || err.message.includes("not supported");
-      
-      if (isLeaked) {
-        errorMsg.textContent = "API key was flagged, restricted, or expired. Please update with a fresh key in Settings (⚙️).";
-      } else if (isNotFound) {
-        errorMsg.textContent = "Google requires an AI Studio key with Imagen enabled. Please verify your Google AI Studio project permissions.";
-      } else {
-        errorMsg.textContent = `Image generation failed: ${err.message}`;
+    console.error("Mockup Generation Error:", err);
+    // Ultimate safety: render canvas so user NEVER sees a failed blank screen
+    try {
+      currentMockupBase64 = generateCanvasMockup(activeLead.firmName, activeLead.firstName, activeLead.location, concept, settings.businessName, settings.valueProp);
+      if (imgResult) imgResult.src = currentMockupBase64;
+      if (downloadBtn) {
+        downloadBtn.href = currentMockupBase64;
+        downloadBtn.download = `${cleanFirm}_workflow_mockup.jpg`;
       }
-      errorArea.style.display = "flex";
+      if (loadingArea) loadingArea.style.display = "none";
+      if (previewArea) previewArea.style.display = "block";
+      showToast("Branded mockup composed via Local Engine! 🎨");
+    } catch (canvasErr) {
+      if (loadingArea) loadingArea.style.display = "none";
+      if (errorArea && errorMsg) {
+        errorMsg.textContent = `Image generation error: ${err.message}`;
+        errorArea.style.display = "flex";
+      }
+      showToast(`Mockup error: ${err.message}`);
     }
-    showToast(`Image gen error: ${err.message}`);
   } finally {
     btn.disabled = false;
     btnText.textContent = originalText;
   }
+}
+
+// Convert SVG code to a high-resolution JPEG Data URL via HTML5 Canvas
+function svgToJpeg(svgCode, width = 1280, height = 720) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const svgBlob = new Blob([svgCode], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#080B11";
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        URL.revokeObjectURL(url);
+        resolve({
+          dataUrl: canvas.toDataURL("image/jpeg", 0.92),
+          format: "jpg"
+        });
+      } catch (e) {
+        URL.revokeObjectURL(url);
+        resolve({
+          dataUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgCode)}`,
+          format: "svg"
+        });
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve({
+        dataUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgCode)}`,
+        format: "svg"
+      });
+    };
+    img.src = url;
+  });
+}
+
+// High-Resolution Client-Side HTML5 Canvas Graphic Generator (100% Offline / Zero Failure)
+function generateCanvasMockup(firmName, firstName, location, concept, businessName, valueProp) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1280;
+  canvas.height = 720;
+  const ctx = canvas.getContext("2d");
+
+  // Helper for rounded rectangles
+  const drawRoundRect = (x, y, w, h, r) => {
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, r);
+      ctx.closePath();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+  };
+
+  // 1. Deep dark background
+  const bgGrad = ctx.createLinearGradient(0, 0, 1280, 720);
+  bgGrad.addColorStop(0, "#080B11");
+  bgGrad.addColorStop(0.5, "#0D111A");
+  bgGrad.addColorStop(1, "#121824");
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, 1280, 720);
+
+  // 2. Glowing ambient blur orbs
+  const glow1 = ctx.createRadialGradient(200, 180, 10, 200, 180, 260);
+  glow1.addColorStop(0, "rgba(0, 240, 255, 0.16)");
+  glow1.addColorStop(1, "rgba(0, 240, 255, 0)");
+  ctx.fillStyle = glow1;
+  ctx.fillRect(0, 0, 600, 500);
+
+  const glow2 = ctx.createRadialGradient(1080, 520, 10, 1080, 520, 280);
+  glow2.addColorStop(0, "rgba(139, 92, 246, 0.18)");
+  glow2.addColorStop(1, "rgba(139, 92, 246, 0)");
+  ctx.fillStyle = glow2;
+  ctx.fillRect(680, 200, 600, 520);
+
+  // Header Title
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "bold 42px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(firmName || "Client Workflow", 640, 95);
+
+  ctx.fillStyle = "#00F0FF";
+  ctx.font = "600 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  ctx.fillText(`${businessName || "SmartRename AI"} Architecture • ${location || "USA"}`, 640, 138);
+
+  if (concept === "videoThumb") {
+    // Video Player Concept
+    ctx.fillStyle = "rgba(255, 255, 255, 0.04)";
+    ctx.strokeStyle = "rgba(0, 240, 255, 0.4)";
+    ctx.lineWidth = 2;
+    drawRoundRect(160, 180, 960, 460, 24);
+    ctx.fill();
+    ctx.stroke();
+
+    // Large Center Frosted Play Button
+    ctx.fillStyle = "rgba(0, 240, 255, 0.15)";
+    ctx.strokeStyle = "#00F0FF";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(640, 380, 60, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Play Triangle
+    ctx.fillStyle = "#00F0FF";
+    ctx.beginPath();
+    ctx.moveTo(630, 355);
+    ctx.lineTo(665, 380);
+    ctx.lineTo(630, 405);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold 28px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.fillText(`30-Sec Workflow Demo for ${firstName || "Team"} at ${firmName}`, 640, 490);
+
+    ctx.fillStyle = "#94A3B8";
+    ctx.font = "18px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.fillText(`Interactive walkthrough: ${valueProp || "Automated OCR Document Organization"}`, 640, 530);
+
+    // Duration pill
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    drawRoundRect(1000, 580, 90, 34, 8);
+    ctx.fill();
+    ctx.fillStyle = "#00F0FF";
+    ctx.font = "bold 15px monospace";
+    ctx.fillText("00:45", 1045, 603);
+  } else if (concept === "portalDashboard") {
+    // SaaS Portal Dashboard Concept
+    const cardDefs = [
+      { x: 120, y: 190, w: 320, h: 200, title: "Total Scans Read", val: "142 Files", tag: "+100% OCR Accuracy", color: "#00F0FF" },
+      { x: 480, y: 190, w: 320, h: 200, title: "Processing Latency", val: "0.8s / File", tag: "Multi-Modal Vision", color: "#8B5CF6" },
+      { x: 840, y: 190, w: 320, h: 200, title: "Weekly Time Saved", val: "4.5 Hours", tag: "Per Bookkeeper", color: "#10B981" }
+    ];
+
+    cardDefs.forEach(c => {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.04)";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+      ctx.lineWidth = 1.5;
+      drawRoundRect(c.x, c.y, c.w, c.h, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#94A3B8";
+      ctx.font = "16px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(c.title, c.x + 24, c.y + 45);
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "bold 34px sans-serif";
+      ctx.fillText(c.val, c.x + 24, c.y + 105);
+
+      ctx.fillStyle = c.color;
+      ctx.font = "bold 15px sans-serif";
+      ctx.fillText(`● ${c.tag}`, c.x + 24, c.y + 155);
+    });
+
+    // Queue Box
+    ctx.fillStyle = "rgba(255, 255, 255, 0.03)";
+    ctx.strokeStyle = "rgba(0, 240, 255, 0.25)";
+    drawRoundRect(120, 420, 1040, 230, 16);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#00F0FF";
+    ctx.font = "bold 20px sans-serif";
+    ctx.fillText(`⚡ Live Filing Queue: ${firmName} Client Batches`, 150, 465);
+
+    ctx.font = "16px monospace";
+    ctx.fillStyle = "#A1A1AA";
+    ctx.fillText("✓ 2026-09-11_Adobe_INV-9821.pdf  ➔  /Clients/Apex/Invoices/  [EXTRACTED]", 150, 515);
+    ctx.fillText("✓ 2026-09-11_HomeDepot_RCP-42.pdf  ➔  /Clients/Apex/Receipts/  [EXTRACTED]", 150, 555);
+    ctx.fillText("✓ 2026-09-10_Chase_BankStmt.pdf    ➔  /Clients/Beacon/Banking/   [EXTRACTED]", 150, 595);
+  } else {
+    // Split Screen Before & After (Default)
+    // Left Card: Before
+    ctx.fillStyle = "rgba(255, 255, 255, 0.03)";
+    ctx.strokeStyle = "rgba(239, 68, 68, 0.4)";
+    ctx.lineWidth = 2;
+    drawRoundRect(120, 190, 480, 440, 18);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#EF4444";
+    ctx.font = "bold 24px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("⚠️ BEFORE: Messy Incoming Scans", 160, 245);
+
+    const messyFiles = [
+      "📄 scan_0042_final_rev.pdf",
+      "📷 IMG_8291_receipt_cropp.jpg",
+      "📄 statement_oct_unread.pdf",
+      "📷 receipt_gas_station_4.jpg",
+      "📄 invoice_copy_temp_v2.pdf"
+    ];
+    ctx.font = "17px monospace";
+    ctx.fillStyle = "#94A3B8";
+    messyFiles.forEach((file, idx) => {
+      ctx.fillText(file, 160, 310 + (idx * 60));
+    });
+
+    // Center Arrow
+    ctx.fillStyle = "#00F0FF";
+    ctx.font = "bold 44px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("➔", 640, 430);
+
+    // Right Card: After
+    ctx.fillStyle = "rgba(255, 255, 255, 0.03)";
+    ctx.strokeStyle = "rgba(0, 240, 255, 0.5)";
+    ctx.lineWidth = 2;
+    drawRoundRect(680, 190, 480, 440, 18);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#00F0FF";
+    ctx.font = "bold 24px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(`✨ AFTER: ${businessName || "SmartRename AI"}`, 720, 245);
+
+    const cleanFiles = [
+      "📁 /Clients/Apex/2026-09_Adobe_INV-891.pdf",
+      "📁 /Clients/Apex/2026-09_HomeDepot_RCP-42.pdf",
+      "📁 /Clients/Beacon/2026-09_Chase_Stmt.pdf",
+      "📁 /Clients/Beacon/2026-09_Chevron_Fuel.pdf",
+      "📁 /Clients/Crest/2026-09_QuickBooks.pdf"
+    ];
+    ctx.font = "17px monospace";
+    ctx.fillStyle = "#34D399";
+    cleanFiles.forEach((file, idx) => {
+      ctx.fillText(file, 720, 310 + (idx * 60));
+    });
+  }
+
+  // Footer Tag
+  ctx.fillStyle = "#64748B";
+  ctx.font = "15px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(`Generated exclusively for ${firmName} • Automated Architecture Preview`, 640, 685);
+
+  return canvas.toDataURL("image/jpeg", 0.95);
 }
 
 function insertMockupNoteIntoEmail() {
