@@ -436,6 +436,7 @@ function loadData() {
     saveData();
   }
 
+  const savedSettings = localStorage.getItem(STORAGE_KEY_SETTINGS);
   if (savedSettings) {
     try {
       settings = { ...settings, ...JSON.parse(savedSettings) };
