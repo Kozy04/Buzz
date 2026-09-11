@@ -1097,34 +1097,67 @@ async function generateMockupWithImagen() {
     }
   }
 
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        instances: [{ prompt: promptText }],
-        parameters: {
-          sampleCount: 1,
-          aspectRatio: "16:9",
-          outputMimeType: "image/jpeg"
-        }
-      })
-    });
+  const candidateModels = [
+    "imagen-4.0-generate-001",
+    "imagen-4.0-fast-generate-001",
+    "imagen-3.0-generate-001"
+  ];
 
-    if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      const msg = errJson?.error?.message || `Imagen 3 error: ${response.status}`;
-      throw new Error(msg);
+  let lastError = null;
+  let base64Data = null;
+  let mimeType = "image/jpeg";
+  let usedModel = "";
+
+  try {
+    for (const modelName of candidateModels) {
+      try {
+        btnText.textContent = `Rendering with ${modelName}...`;
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:predict?key=${apiKey}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey
+          },
+          body: JSON.stringify({
+            instances: [{ prompt: promptText }],
+            parameters: {
+              sampleCount: 1,
+              aspectRatio: "16:9"
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const errJson = await response.json().catch(() => ({}));
+          const msg = errJson?.error?.message || `Status ${response.status}`;
+          lastError = new Error(msg);
+          
+          if (msg.includes("leaked") || msg.includes("PERMISSION_DENIED") || msg.includes("API key not valid")) {
+            throw lastError;
+          }
+          console.warn(`Model ${modelName} returned: ${msg}. Trying next candidate model...`);
+          continue;
+        }
+
+        const data = await response.json();
+        const pred = data.predictions?.[0] || data.generatedImages?.[0] || data.images?.[0];
+        base64Data = pred?.bytesBase64Encoded || pred?.imageBytes || pred?.image?.imageBytes || (typeof pred === "string" ? pred : null);
+        mimeType = pred?.mimeType || pred?.image?.mimeType || "image/jpeg";
+
+        if (base64Data) {
+          usedModel = modelName;
+          break;
+        }
+      } catch (err) {
+        lastError = err;
+        if (err.message.includes("leaked") || err.message.includes("PERMISSION_DENIED") || err.message.includes("API key not valid")) {
+          throw err;
+        }
+      }
     }
 
-    const data = await response.json();
-    const base64Data = data.predictions?.[0]?.bytesBase64Encoded;
-    const mimeType = data.predictions?.[0]?.mimeType || "image/jpeg";
-
     if (!base64Data) {
-      throw new Error("No image data returned from Imagen 3");
+      throw lastError || new Error("No image data returned from Google Imagen service.");
     }
 
     currentMockupBase64 = `data:${mimeType};base64,${base64Data}`;
@@ -1139,15 +1172,21 @@ async function generateMockupWithImagen() {
 
     if (loadingArea) loadingArea.style.display = "none";
     if (previewArea) previewArea.style.display = "block";
-    showToast("Branded mockup generated with Imagen 3! 🎨");
+    showToast(`Branded mockup generated with ${usedModel || "Imagen 4"}! 🎨`);
   } catch (err) {
-    console.error("Imagen 3 Error:", err);
+    console.error("Imagen Error:", err);
     if (loadingArea) loadingArea.style.display = "none";
     if (errorArea && errorMsg) {
-      const isLeaked = err.message.includes("leaked") || err.message.includes("PERMISSION_DENIED");
-      errorMsg.textContent = isLeaked
-        ? "API key was flagged or disabled. Please update your key in Settings (⚙️)."
-        : `Image generation failed: ${err.message}`;
+      const isLeaked = err.message.includes("leaked") || err.message.includes("PERMISSION_DENIED") || err.message.includes("API key not valid");
+      const isNotFound = err.message.includes("not found") || err.message.includes("not supported");
+      
+      if (isLeaked) {
+        errorMsg.textContent = "API key was flagged, restricted, or expired. Please update with a fresh key in Settings (⚙️).";
+      } else if (isNotFound) {
+        errorMsg.textContent = "Google requires an AI Studio key with Imagen enabled. Please verify your Google AI Studio project permissions.";
+      } else {
+        errorMsg.textContent = `Image generation failed: ${err.message}`;
+      }
       errorArea.style.display = "flex";
     }
     showToast(`Image gen error: ${err.message}`);
