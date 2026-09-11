@@ -25,7 +25,10 @@ const DEFAULT_LEADS = [
     location: "Austin, TX",
     website: "https://www.holliscpa.com",
     personalHook: "noticed the full-service tax and bookkeeping work your team does for small businesses across the Austin area",
-    status: "pending"
+    status: "contacted",
+    lastContactedAt: new Date(Date.now() - 4 * 86400000).toISOString(),
+    followUpDueAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+    followUpCount: 1
   },
   {
     id: 3,
@@ -45,7 +48,10 @@ const DEFAULT_LEADS = [
     location: "Austin, TX",
     website: "https://www.bittelbooks.com",
     personalHook: "noticed your specialized focus on bookkeeping and tax prep for freelancers and local LLCs",
-    status: "pending"
+    status: "contacted",
+    lastContactedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+    followUpDueAt: new Date().toISOString(),
+    followUpCount: 1
   },
   {
     id: 5,
@@ -55,7 +61,10 @@ const DEFAULT_LEADS = [
     location: "Austin, TX",
     website: "https://www.swiftnumbers.com",
     personalHook: "noticed your dedicated monthly client bookkeeping and receipt reconciliation services",
-    status: "pending"
+    status: "contacted",
+    lastContactedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+    followUpDueAt: new Date(Date.now() + 2 * 86400000).toISOString(),
+    followUpCount: 1
   },
   {
     id: 6,
@@ -121,10 +130,13 @@ let settings = {
   geminiApiKey: ""
 };
 
-// Templates
+let selectedFollowUpScheduleDays = 3;
+
+// Templates (Initial Hooks + 3-Stage Follow-Up Cadence)
 const TEMPLATES = {
   receipt: {
-    name: "Receipt Hook",
+    name: "1. Receipt Hook",
+    cadenceStage: "Initial Pitch",
     getSubject: (lead) => `receipt & invoice naming at ${lead.firmName}`,
     getBody: (lead) => `Hi ${lead.firstName},
 
@@ -148,7 +160,8 @@ ${settings.productUrl}`
   },
 
   cpa: {
-    name: "CPA Document Hook",
+    name: "1. CPA Hook",
+    cadenceStage: "Initial Pitch",
     getSubject: (lead) => `eliminating manual document renaming at ${lead.firmName}`,
     getBody: (lead) => `Hi ${lead.firstName},
 
@@ -169,22 +182,138 @@ SmartRename AI
 ${settings.productUrl}`
   },
 
-  followup: {
-    name: "48h Loom Bump",
+  followup1: {
+    name: "2. Bump (Day 3)",
+    cadenceStage: "Follow-Up #1",
     getSubject: (lead) => `Re: receipt & invoice naming at ${lead.firmName}`,
     getBody: (lead) => `Hi ${lead.firstName},
 
-Following up briefly on this—I know you're busy managing client books.
+Just bumping this to the top of your inbox in case it got buried under client receipts earlier this week.
 
-Here is a 45-second demo showing 40 messy incoming client receipts being parsed, renamed, and organized into categorized folders in under 10 seconds: [Insert Loom Demo Link]
+Did you get a quick moment to consider whether automating document renaming on incoming client files would help your team at ${lead.firmName}?
 
-I'd be happy to set you up with 100 free file credits on ${settings.productUrl} so you can test it on your next batch. Let me know if you'd like an access pass!
+Happy to send over a 45-second screen recording showing how SmartRename AI (${settings.productUrl}) handles 30 messy PDFs in one click if you're swamped.
+
+Best,
+
+${settings.senderName}`
+  },
+
+  followup2: {
+    name: "3. Proof (Day 7)",
+    cadenceStage: "Follow-Up #2",
+    getSubject: (lead) => `saving 4+ hours on document cleanup at ${lead.firmName}`,
+    getBody: (lead) => `Hi ${lead.firstName},
+
+I know you're busy running things at ${lead.firmName}, so I'll keep this under 30 seconds.
+
+One of the bookkeepers using SmartRename AI mentioned they used to spend Friday afternoons manually renaming and sorting client bank statements, receipts, and invoices that arrived as "scan_001.pdf".
+
+With SmartRename AI (${settings.productUrl}), they now drop 50 files into the tool, and within seconds, each file is renamed to "YYYY-MM-DD_Vendor_Amount" and filed into clean client folders.
+
+If you have 10 messy sample files, send them over—I'll process them free today so you can see the result on your own client files.
+
+Best regards,
+
+${settings.senderName}`
+  },
+
+  followup3: {
+    name: "4. Breakup (Day 14)",
+    cadenceStage: "Follow-Up #3 (Final)",
+    getSubject: (lead) => `closing the loop / ${lead.firmName}`,
+    getBody: (lead) => `Hi ${lead.firstName},
+
+I haven't heard back, so I assume automating document renaming and folder organization isn't a priority for ${lead.firmName} right now. Completely understand!
+
+I won't clutter your inbox with any further emails. 
+
+If you ever find your team losing too much time during tax season or monthly close renaming unorganized client files, feel free to test SmartRename AI anytime at ${settings.productUrl}.
+
+Wishing you and the team at ${lead.firmName} continued success!
 
 Best,
 
 ${settings.senderName}`
   }
 };
+
+// ==========================================
+// Follow-Up Cadence Calculations & Helpers
+// ==========================================
+function getFollowUpStatus(lead) {
+  if (lead.status !== "contacted") return null;
+
+  const now = new Date();
+  let dueDate = lead.followUpDueAt ? new Date(lead.followUpDueAt) : null;
+  if (!dueDate && lead.lastContactedAt) {
+    dueDate = new Date(new Date(lead.lastContactedAt).getTime() + 3 * 86400000);
+  }
+  if (!dueDate) {
+    return {
+      state: "due-today",
+      badgeText: "Follow-up Due Today",
+      icon: "⏰",
+      stepNum: (lead.followUpCount || 0) + 1
+    };
+  }
+
+  const msPerDay = 86400000;
+  const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const dueZero = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate()).getTime();
+  const diffDays = Math.round((dueZero - todayZero) / msPerDay);
+  const stepNum = (lead.followUpCount || 0) + 1;
+
+  if (diffDays < 0) {
+    const overdueDays = Math.abs(diffDays);
+    return {
+      state: "overdue",
+      badgeText: `Follow-up #${stepNum} Overdue (${overdueDays}d)`,
+      icon: "🔴",
+      diffDays,
+      stepNum
+    };
+  } else if (diffDays === 0) {
+    return {
+      state: "due-today",
+      badgeText: `Follow-up #${stepNum} Due Today`,
+      icon: "⏰",
+      diffDays: 0,
+      stepNum
+    };
+  } else {
+    return {
+      state: "upcoming",
+      badgeText: `Follow-up #${stepNum} in ${diffDays}d`,
+      icon: "⏳",
+      diffDays,
+      stepNum
+    };
+  }
+}
+
+function isFollowUpDue(lead) {
+  const status = getFollowUpStatus(lead);
+  return status && (status.state === "overdue" || status.state === "due-today");
+}
+
+function formatShortDate(isoString) {
+  if (!isoString) return "";
+  const d = new Date(isoString);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function snoozeLeadFollowUp(leadId, days = 3) {
+  const lead = leads.find(l => l.id === leadId);
+  if (!lead) return;
+  const baseTime = lead.followUpDueAt && new Date(lead.followUpDueAt).getTime() > Date.now()
+    ? new Date(lead.followUpDueAt).getTime()
+    : Date.now();
+  lead.followUpDueAt = new Date(baseTime + days * 86400000).toISOString();
+  saveData();
+  renderApp();
+  showToast(`Snoozed follow-up for ${lead.firmName} by +${days} days ⏰`);
+}
 
 // ==========================================
 // Initialization & Storage
@@ -246,6 +375,7 @@ function updateKpiAndCounts() {
   const sample = leads.filter(l => l.status === "sample").length;
   const won = leads.filter(l => l.status === "won").length;
   const pending = leads.filter(l => l.status === "pending").length;
+  const followups = leads.filter(l => l.status === "contacted" && isFollowUpDue(l)).length;
 
   document.getElementById("kpiTotal").textContent = total;
   document.getElementById("kpiContacted").textContent = contacted;
@@ -257,6 +387,15 @@ function updateKpiAndCounts() {
   document.getElementById("countContacted").textContent = contacted;
   document.getElementById("countSample").textContent = sample;
   document.getElementById("countWon").textContent = won;
+
+  const countFollowupsEl = document.getElementById("countFollowups");
+  if (countFollowupsEl) {
+    countFollowupsEl.textContent = followups;
+    const filterChip = document.querySelector(".filter-chip-followup");
+    if (filterChip) {
+      filterChip.classList.toggle("has-due", followups > 0);
+    }
+  }
 }
 
 function renderLeadsList() {
@@ -266,7 +405,11 @@ function renderLeadsList() {
 
   const filtered = leads.filter(lead => {
     // Filter by tab
-    if (currentFilter !== "all" && lead.status !== currentFilter) {
+    if (currentFilter === "followups") {
+      if (lead.status !== "contacted" || !isFollowUpDue(lead)) {
+        return false;
+      }
+    } else if (currentFilter !== "all" && lead.status !== currentFilter) {
       return false;
     }
     // Filter by search
@@ -299,6 +442,31 @@ function renderLeadsList() {
       won: "Won ($)"
     };
 
+    const fu = getFollowUpStatus(lead);
+    const isUrgent = fu && (fu.state === "overdue" || fu.state === "due-today");
+
+    let followupRowHtml = "";
+    if (fu) {
+      followupRowHtml = `
+        <div class="lead-followup-row">
+          <span class="lead-followup-badge ${fu.state}">
+            <span>${fu.icon}</span>
+            <span>${fu.badgeText}</span>
+          </span>
+          ${lead.lastContactedAt ? `<span class="last-sent-hint">Sent: ${formatShortDate(lead.lastContactedAt)}</span>` : ""}
+        </div>
+      `;
+    }
+
+    let draftBtnText = "Draft & Send";
+    let draftBtnClass = "btn-open-draft";
+    if (isUrgent) {
+      draftBtnClass = "btn-open-draft btn-urgent-followup";
+      draftBtnText = `Send Follow-Up #${fu.stepNum}`;
+    } else if (lead.status === "contacted") {
+      draftBtnText = `Follow-Up #${fu ? fu.stepNum : 2}`;
+    }
+
     card.innerHTML = `
       <div class="lead-card-header">
         <div>
@@ -314,19 +482,27 @@ function renderLeadsList() {
         </span>
       </div>
 
+      ${followupRowHtml}
+
       <div class="lead-hook-box">
         "${escapeHtml(lead.personalHook || "potential client for receipt & invoice sorting")}"
       </div>
 
       <div class="lead-card-actions">
         <div class="action-btn-group">
-          <button class="btn-open-draft" data-id="${lead.id}">
+          <button class="${draftBtnClass}" data-id="${lead.id}">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
               <polyline points="22,6 12,13 2,6"></polyline>
             </svg>
-            <span>Draft & Send</span>
+            <span>${draftBtnText}</span>
           </button>
+
+          ${lead.status === "contacted" ? `
+            <button class="snooze-btn" data-id="${lead.id}" title="Snooze / Reschedule Follow-up +3 Days">
+              +3d
+            </button>
+          ` : ""}
           
           <button class="icon-btn edit-lead-btn" data-id="${lead.id}" style="width: 36px; height: 36px;" title="Edit Lead">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -352,6 +528,14 @@ function renderLeadsList() {
     card.querySelector(".btn-open-draft").addEventListener("click", () => openDrafter(lead));
     card.querySelector(".edit-lead-btn").addEventListener("click", () => openEditLeadModal(lead));
     
+    const snoozeBtn = card.querySelector(".snooze-btn");
+    if (snoozeBtn) {
+      snoozeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        snoozeLeadFollowUp(lead.id, 3);
+      });
+    }
+
     // Tap badge to cycle status
     card.querySelector(".status-badge").addEventListener("click", (e) => {
       e.stopPropagation();
@@ -370,15 +554,43 @@ function openDrafter(lead) {
   document.getElementById("drafterTargetFirm").textContent = lead.firmName;
   document.getElementById("drafterTargetEmail").textContent = lead.email;
   
-  // Set template pills
+  // Smart-select cadence template based on lead status and followUpCount
+  if (lead.status === "contacted") {
+    const count = lead.followUpCount || 0;
+    if (count <= 1) {
+      activeTemplate = "followup1";
+    } else if (count === 2) {
+      activeTemplate = "followup2";
+    } else {
+      activeTemplate = "followup3";
+    }
+  } else {
+    activeTemplate = "receipt";
+  }
+
+  // Set template pills active state
   document.querySelectorAll(".template-pill").forEach(p => {
     p.classList.toggle("active", p.dataset.template === activeTemplate);
   });
 
+  // Reset follow-up schedule pills to default 3
+  selectedFollowUpScheduleDays = 3;
+  document.querySelectorAll(".sched-pill").forEach(pill => {
+    pill.classList.toggle("active", parseInt(pill.dataset.days, 10) === selectedFollowUpScheduleDays);
+  });
+
+  updateCadenceIndicator();
   updateDrafterContent();
   updateDrafterStatusPills(lead.status);
 
   document.getElementById("modalDrafter").style.display = "flex";
+}
+
+function updateCadenceIndicator() {
+  const badge = document.getElementById("drafterCadenceStepText");
+  if (!badge || !activeLead) return;
+  const tmpl = TEMPLATES[activeTemplate];
+  badge.textContent = tmpl?.cadenceStage || (activeLead.status === "contacted" ? `Follow-Up #${(activeLead.followUpCount || 0) + 1}` : "Initial Pitch");
 }
 
 function updateDrafterContent() {
@@ -406,7 +618,37 @@ async function generateWithGemini() {
   aiBtn.classList.add("loading");
   aiBtnText.textContent = "AI Drafting...";
 
-  const promptText = `You are an elite B2B cold email copywriter. Write a concise, hyper-personalized, non-spammy cold outreach email from "${settings.senderName}" to "${activeLead.firstName}" at "${activeLead.firmName}".
+  let promptText = "";
+  if (activeTemplate === "followup1") {
+    promptText = `You are an elite B2B cold email copywriter. Write a 45-word polite, ultra-brief follow-up email from "${settings.senderName}" to "${activeLead.firstName}" at "${activeLead.firmName}".
+Context: Sent an email 3 days ago about SmartRename AI (${settings.productUrl}) to automate document and receipt renaming for ${activeLead.firmName}.
+Goal: Friendly bump to the top of inbox. Mention you know they are busy with client files. Ask if they'd like a 45-second screen recording.
+Strict Rules: Under 60 words, zero fluff, casual & respectful peer-to-peer tone.
+Format strictly:
+SUBJECT: Re: receipt & invoice naming at ${activeLead.firmName}
+BODY:
+[body]`;
+  } else if (activeTemplate === "followup2") {
+    promptText = `You are an elite B2B cold email copywriter. Write a 65-word value-proof follow-up email from "${settings.senderName}" to "${activeLead.firstName}" at "${activeLead.firmName}".
+Context: Sent two emails earlier regarding SmartRename AI (${settings.productUrl}).
+Goal: Share a quick real-world proof point: a bookkeeper saves 4+ hours every Friday by having messy incoming client files (scanned receipts, bank statements) automatically renamed and organized into client folders. Offer to process 10 sample files for free today.
+Strict Rules: Under 75 words, no buzzwords.
+Format strictly:
+SUBJECT: saving 4+ hours on document cleanup at ${activeLead.firmName}
+BODY:
+[body]`;
+  } else if (activeTemplate === "followup3") {
+    promptText = `You are an elite B2B cold email copywriter. Write a 45-word polite "breakup / closing the file" email from "${settings.senderName}" to "${activeLead.firstName}" at "${activeLead.firmName}".
+Context: Followed up twice with no response.
+Goal: Politely assume automating client document renaming isn't a priority right now, promise not to email again, leave the link to SmartRename AI (${settings.productUrl}) in case tax season or file chaos ever becomes an issue. Wish them success.
+Strict Rules: Under 50 words, completely non-passive-aggressive, warm and professional.
+Format strictly:
+SUBJECT: closing the loop / ${activeLead.firmName}
+BODY:
+[body]`;
+  } else {
+    // Initial pitch prompt
+    promptText = `You are an elite B2B cold email copywriter. Write a concise, hyper-personalized, non-spammy cold outreach email from "${settings.senderName}" to "${activeLead.firstName}" at "${activeLead.firmName}".
 
 Target Info:
 - Firm: ${activeLead.firmName}
@@ -427,6 +669,7 @@ Strict Rules:
 SUBJECT: [short lowercase subject]
 BODY:
 [complete email body]`;
+  }
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
@@ -501,12 +744,26 @@ function launchMailApp() {
 
   const mailtoUrl = `mailto:${encodeURIComponent(activeLead.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   
-  // Mark lead as contacted automatically if it was pending
-  if (activeLead.status === "pending") {
-    setLeadStatus(activeLead.id, "contacted");
+  // Advance cadence tracking
+  activeLead.status = "contacted";
+  activeLead.followUpCount = (activeLead.followUpCount || 0) + 1;
+  activeLead.lastContactedAt = new Date().toISOString();
+
+  if (selectedFollowUpScheduleDays > 0) {
+    activeLead.followUpDueAt = new Date(Date.now() + selectedFollowUpScheduleDays * 86400000).toISOString();
+  } else {
+    activeLead.followUpDueAt = null;
   }
 
-  showToast("Launching mail client...");
+  saveData();
+  renderApp();
+  updateDrafterStatusPills("contacted");
+
+  const schedMsg = selectedFollowUpScheduleDays > 0
+    ? `Follow-up #${activeLead.followUpCount + 1} scheduled in +${selectedFollowUpScheduleDays} days 📅`
+    : `Follow-up schedule off`;
+  showToast(`Mail client launched! ${schedMsg}`);
+
   window.location.href = mailtoUrl;
 }
 
@@ -566,6 +823,10 @@ function openAddLeadModal() {
   document.getElementById("leadModalTitle").textContent = "Add New Prospect";
   document.getElementById("editLeadId").value = "";
   document.getElementById("leadForm").reset();
+  const statusEl = document.getElementById("formStatus");
+  if (statusEl) statusEl.value = "pending";
+  const fuDateEl = document.getElementById("formFollowUpDate");
+  if (fuDateEl) fuDateEl.value = "";
   document.getElementById("modalLead").style.display = "flex";
 }
 
@@ -578,6 +839,14 @@ function openEditLeadModal(lead) {
   document.getElementById("formEmail").value = lead.email;
   document.getElementById("formWebsite").value = lead.website || "";
   document.getElementById("formHook").value = lead.personalHook || "";
+  
+  const statusEl = document.getElementById("formStatus");
+  if (statusEl) statusEl.value = lead.status || "pending";
+  const fuDateEl = document.getElementById("formFollowUpDate");
+  if (fuDateEl) {
+    fuDateEl.value = lead.followUpDueAt ? lead.followUpDueAt.split("T")[0] : "";
+  }
+  
   document.getElementById("modalLead").style.display = "flex";
 }
 
@@ -594,6 +863,9 @@ function handleSaveLead(e) {
   const email = document.getElementById("formEmail").value.trim();
   const website = document.getElementById("formWebsite").value.trim();
   const personalHook = document.getElementById("formHook").value.trim() || "noticed your client services";
+  
+  const statusVal = document.getElementById("formStatus") ? document.getElementById("formStatus").value : "pending";
+  const followUpDateVal = document.getElementById("formFollowUpDate") ? document.getElementById("formFollowUpDate").value : "";
 
   if (!firmName || !email) {
     showToast("Please provide firm name and email.");
@@ -610,6 +882,8 @@ function handleSaveLead(e) {
       lead.email = email;
       lead.website = website;
       lead.personalHook = personalHook;
+      lead.status = statusVal;
+      lead.followUpDueAt = followUpDateVal ? new Date(followUpDateVal).toISOString() : null;
       showToast("Prospect updated");
     }
   } else {
@@ -622,7 +896,9 @@ function handleSaveLead(e) {
       email,
       website,
       personalHook,
-      status: "pending"
+      status: statusVal,
+      followUpDueAt: followUpDateVal ? new Date(followUpDateVal).toISOString() : null,
+      followUpCount: 0
     };
     leads.unshift(newLead);
     showToast("New prospect added!");
@@ -972,7 +1248,17 @@ function setupEventListeners() {
       document.querySelectorAll(".template-pill").forEach(p => p.classList.remove("active"));
       pill.classList.add("active");
       activeTemplate = pill.dataset.template;
+      updateCadenceIndicator();
       updateDrafterContent();
+    });
+  });
+
+  // Follow-Up Schedule Pills
+  document.querySelectorAll(".sched-pill").forEach(pill => {
+    pill.addEventListener("click", () => {
+      document.querySelectorAll(".sched-pill").forEach(p => p.classList.remove("active"));
+      pill.classList.add("active");
+      selectedFollowUpScheduleDays = parseInt(pill.dataset.days, 10);
     });
   });
 

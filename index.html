@@ -92,6 +92,7 @@
       <!-- Filter Scroll Strip -->
       <div class="filter-strip">
         <button class="filter-chip active" data-filter="all">All (<span id="countAll">10</span>)</button>
+        <button class="filter-chip filter-chip-followup" data-filter="followups">🔔 Follow-ups Due (<span id="countFollowups">0</span>)</button>
         <button class="filter-chip" data-filter="pending">Pending (<span id="countPending">10</span>)</button>
         <button class="filter-chip" data-filter="contacted">Contacted (<span id="countContacted">0</span>)</button>
         <button class="filter-chip" data-filter="sample">Sample Sent (<span id="countSample">0</span>)</button>
@@ -143,16 +144,18 @@
       <div class="modal-body">
         <!-- Template Switcher Pills & AI Button -->
         <div class="template-header-row">
-          <label class="input-label">Outreach Template</label>
+          <label class="input-label">Outreach Cadence & Template</label>
           <button id="btnAiDraft" class="btn-ai-magic" title="Draft personalized email with Gemini AI">
             <span class="ai-sparkle">✨</span>
             <span id="aiBtnText">AI Smart Draft</span>
           </button>
         </div>
         <div class="template-selector">
-          <button class="template-pill active" data-template="receipt">Receipt Hook</button>
-          <button class="template-pill" data-template="cpa">CPA Document Hook</button>
-          <button class="template-pill" data-template="followup">48h Loom Bump</button>
+          <button class="template-pill active" data-template="receipt">1. Receipt Hook</button>
+          <button class="template-pill" data-template="cpa">1. CPA Hook</button>
+          <button class="template-pill" data-template="followup1">2. Bump (Day 3)</button>
+          <button class="template-pill" data-template="followup2">3. Proof (Day 7)</button>
+          <button class="template-pill" data-template="followup3">4. Breakup (Day 14)</button>
         </div>
 
         <!-- Subject Line -->
@@ -164,7 +167,21 @@
           <label class="input-label" for="drafterBody">Personalized Email Body</label>
           <span class="auto-hint">Auto-interpolated</span>
         </div>
-        <textarea id="drafterBody" class="textarea-input" rows="12"></textarea>
+        <textarea id="drafterBody" class="textarea-input" rows="11"></textarea>
+
+        <!-- Follow-Up Schedule Setting -->
+        <div class="followup-schedule-container">
+          <div class="schedule-header-row">
+            <span class="schedule-label">Next Follow-Up Schedule:</span>
+            <span id="drafterCadenceStepText" class="cadence-step-badge">Initial Pitch</span>
+          </div>
+          <div class="schedule-pills" id="schedulePillsContainer">
+            <button type="button" class="sched-pill active" data-days="3">+3 Days</button>
+            <button type="button" class="sched-pill" data-days="5">+5 Days</button>
+            <button type="button" class="sched-pill" data-days="7">+7 Days</button>
+            <button type="button" class="sched-pill" data-days="0">Off</button>
+          </div>
+        </div>
       </div>
 
       <!-- Action Footer -->
@@ -239,6 +256,22 @@
         <div class="form-group">
           <label class="input-label" for="formHook">Personalized Observation / Hook</label>
           <input type="text" id="formHook" class="text-input" placeholder="e.g. noticed your focus on restaurant client cleanups" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="input-label" for="formStatus">Pipeline Status</label>
+            <select id="formStatus" class="text-input select-input">
+              <option value="pending">Pending</option>
+              <option value="contacted">Contacted</option>
+              <option value="sample">Sample Sent</option>
+              <option value="won">Won ($)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="input-label" for="formFollowUpDate">Next Follow-Up Date</label>
+            <input type="date" id="formFollowUpDate" class="text-input" />
+          </div>
         </div>
 
         <div class="modal-footer" style="padding: 16px 0 0 0;">
