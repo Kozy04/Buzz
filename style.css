@@ -409,12 +409,38 @@ body {
   margin-bottom: 12px;
 }
 
-/* Floating Action Button (FAB) */
+/* Floating Action Buttons (FAB) */
 .fab-wrapper {
   position: fixed;
   bottom: calc(20px + var(--safe-bottom));
-  right: 20px;
+  right: 16px;
   z-index: 50;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn-fab-scout {
+  background: rgba(14, 14, 18, 0.9);
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  border-radius: 30px;
+  padding: 11px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 8px 20px rgba(0, 240, 255, 0.25);
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: transform 0.2s ease;
+}
+
+.btn-fab-scout:active {
+  transform: scale(0.94);
+  background: var(--accent-cyan);
+  color: #08080A;
 }
 
 .btn-fab {
@@ -422,12 +448,12 @@ body {
   color: #08080A;
   border: none;
   border-radius: 30px;
-  padding: 12px 20px;
-  font-size: 14px;
+  padding: 11px 18px;
+  font-size: 13px;
   font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   box-shadow: 0 10px 25px rgba(0, 240, 255, 0.4);
   cursor: pointer;
   transition: transform 0.2s ease;
@@ -796,4 +822,81 @@ body {
 @keyframes fadeIn {
   from { opacity: 0; transform: translate(-50%, 10px); }
   to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Scout Modal Styles */
+.scout-explainer {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 16px;
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px dashed rgba(0, 240, 255, 0.2);
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.select-input {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+
+.select-input option {
+  background-color: #111116;
+  color: #F9FAFB;
+}
+
+.scout-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.scouted-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px;
+  position: relative;
+  transition: border-color 0.2s;
+}
+
+.scouted-card:hover {
+  border-color: var(--accent-cyan);
+}
+
+.scouted-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.scouted-meta {
+  font-size: 12px;
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.scouted-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.btn-import-all {
+  background: linear-gradient(135deg, #10B981 0%, #00F0FF 100%) !important;
+  color: #08080A !important;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
 }

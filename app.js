@@ -627,7 +627,142 @@ function handleSaveLead(e) {
 
   saveData();
   renderApp();
-  closeLeadModal();
+// ==========================================
+// AI Lead Scout (Google Search Grounding)
+// ==========================================
+let discoveredLeads = [];
+
+function openScoutModal() {
+  discoveredLeads = [];
+  document.getElementById("scoutResultsArea").style.display = "none";
+  document.getElementById("scoutResultsList").innerHTML = "";
+  document.getElementById("modalScout").style.display = "flex";
+}
+
+function closeScoutModal() {
+  document.getElementById("modalScout").style.display = "none";
+}
+
+async function runScoutWithGemini() {
+  const apiKey = settings.geminiApiKey || "AIzaSyDomMXLi9JjVyvWoMQuNRu3QwsyXjQPQqc";
+  if (!apiKey) {
+    showToast("Please provide a Gemini API key in Settings");
+    return;
+  }
+
+  const country = document.getElementById("scoutCountry").value.trim() || "Nigeria";
+  const state = document.getElementById("scoutState").value.trim() || "Lagos";
+  const lga = document.getElementById("scoutLga").value.trim() || "Ikeja";
+  const niche = document.getElementById("scoutNiche").value;
+  const count = parseInt(document.getElementById("scoutCount").value, 10) || 3;
+
+  const btn = document.getElementById("btnRunScout");
+  const btnText = document.getElementById("scoutBtnText");
+  const originalText = btnText.textContent;
+
+  btn.disabled = true;
+  btnText.textContent = `Searching Google for ${lga}...`;
+
+  const promptText = `Use Google Search to find exactly ${count} real, active ${niche} physically located or operating in ${lga}, ${state}, ${country}.
+For each business, extract their real firm name, owner or partner name (if unknown, use "there"), official website URL, public business/contact email address, and a 1-sentence observation about their specific services or specialty.
+
+Format your output STRICTLY as a JSON array of objects with these exact keys:
+[
+  {
+    "firm_name": "...",
+    "owner_name": "...",
+    "email": "...",
+    "website": "...",
+    "location": "${lga}, ${state}",
+    "hook": "..."
+  }
+]
+Output ONLY valid JSON. Do not include markdown code block formatting or explanation.`;
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: promptText }] }],
+        tools: [{ google_search: {} }]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    // Clean markdown fences if present
+    rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+    // Parse JSON
+    const parsed = JSON.parse(rawText);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      discoveredLeads = parsed;
+      renderScoutedResults(discoveredLeads);
+      document.getElementById("scoutResultsArea").style.display = "block";
+      showToast(`Found ${discoveredLeads.length} authentic leads in ${lga}! ✨`);
+    } else {
+      throw new Error("No leads found in response");
+    }
+  } catch (err) {
+    console.error("Scout Error:", err);
+    showToast("Search failed or no leads parsed. Try a broader city/LGA.");
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = originalText;
+  }
+}
+
+function renderScoutedResults(list) {
+  const container = document.getElementById("scoutResultsList");
+  container.innerHTML = "";
+
+  list.forEach((item) => {
+    const card = document.createElement("div");
+    card.className = "scouted-card";
+    card.innerHTML = `
+      <div class="scouted-title">${escapeHtml(item.firm_name)}</div>
+      <div class="scouted-meta">
+        <span>👤 ${escapeHtml(item.owner_name || "Lead Partner")}</span>
+        <span>•</span>
+        <span>✉️ ${escapeHtml(item.email || "contact on site")}</span>
+      </div>
+      <div class="scouted-desc">"${escapeHtml(item.hook || "local client services")}"</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function importScoutedLeads() {
+  if (!discoveredLeads || discoveredLeads.length === 0) return;
+
+  let addedCount = 0;
+  discoveredLeads.forEach(item => {
+    const exists = leads.some(l => l.email && l.email.toLowerCase() === (item.email || "").toLowerCase());
+    if (!exists) {
+      leads.unshift({
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        firmName: item.firm_name || "Prospective Firm",
+        firstName: item.owner_name || "there",
+        location: item.location || "Local",
+        email: item.email || "info@example.com",
+        website: item.website || "",
+        personalHook: item.hook || "noticed your specialized local client services",
+        status: "pending"
+      });
+      addedCount++;
+    }
+  });
+
+  saveData();
+  renderApp();
+  closeScoutModal();
+  showToast(`Imported ${addedCount} new leads to pipeline! 🎉`);
 }
 
 // ==========================================
@@ -781,6 +916,17 @@ function setupEventListeners() {
   document.getElementById("btnCloseLeadModal").addEventListener("click", closeLeadModal);
   document.getElementById("btnCancelLead").addEventListener("click", closeLeadModal);
   document.getElementById("leadForm").addEventListener("submit", handleSaveLead);
+
+  // Scout Modal events
+  const btnOpenScout = document.getElementById("btnOpenScout");
+  if (btnOpenScout) btnOpenScout.addEventListener("click", openScoutModal);
+  
+  const btnOpenScoutFab = document.getElementById("btnOpenScoutFab");
+  if (btnOpenScoutFab) btnOpenScoutFab.addEventListener("click", openScoutModal);
+
+  document.getElementById("btnCloseScout").addEventListener("click", closeScoutModal);
+  document.getElementById("btnRunScout").addEventListener("click", runScoutWithGemini);
+  document.getElementById("btnAddScoutedLeads").addEventListener("click", importScoutedLeads);
 
   // Settings
   document.getElementById("btnSettings").addEventListener("click", openSettingsModal);
