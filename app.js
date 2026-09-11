@@ -915,7 +915,7 @@ BODY:
         ],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 350
+          maxOutputTokens: 2048
         }
       })
     });
@@ -927,21 +927,40 @@ BODY:
     }
 
     const data = await response.json();
-    const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const candidateParts = data.candidates?.[0]?.content?.parts || [];
+    
+    // Extract visible text (filtering out thought/internal reasoning parts in Gemini 2.5)
+    let candidateText = "";
+    for (const part of candidateParts) {
+      if (part.text && !part.thought) {
+        candidateText += part.text;
+      }
+    }
+    if (!candidateText && candidateParts[0]?.text) {
+      candidateText = candidateParts[0].text;
+    }
 
     if (candidateText) {
-      const subjectMatch = candidateText.match(/SUBJECT:\s*(.*?)(?:\n|$)/i);
-      const bodyMatch = candidateText.match(/BODY:\s*([\s\S]*)/i);
+      // Support standard, bold (**SUBJECT:**), or lowercase subject headers
+      const subjectMatch = candidateText.match(/(?:\*{0,2})SUBJECT(?:\*{0,2}):\s*(.*?)(?:\n|$)/i);
+      const bodyMatch = candidateText.match(/(?:\*{0,2})BODY(?:\*{0,2}):?\s*([\s\S]*)/i);
 
       if (subjectMatch && subjectMatch[1]) {
-        document.getElementById("drafterSubject").value = subjectMatch[1].trim();
-      }
-      if (bodyMatch && bodyMatch[1]) {
-        document.getElementById("drafterBody").value = bodyMatch[1].trim();
-      } else {
-        document.getElementById("drafterBody").value = candidateText.trim();
+        document.getElementById("drafterSubject").value = subjectMatch[1].trim().replace(/^\*+|\*+$/g, "");
       }
 
+      let cleanBody = "";
+      if (bodyMatch && bodyMatch[1] && bodyMatch[1].trim()) {
+        cleanBody = bodyMatch[1].trim();
+      } else {
+        // Fallback: strip any SUBJECT header and lone BODY label from candidateText
+        cleanBody = candidateText
+          .replace(/(?:\*{0,2})SUBJECT(?:\*{0,2}):\s*.*?(?:\n+|$)/i, "")
+          .replace(/^(?:\*{0,2})BODY(?:\*{0,2}):?\s*/i, "")
+          .trim();
+      }
+
+      document.getElementById("drafterBody").value = cleanBody;
       showToast("Drafted with Gemini 2.5 Flash ✨");
     } else {
       throw new Error("Empty AI response");
