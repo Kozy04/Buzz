@@ -642,6 +642,18 @@ function openScoutModal() {
   discoveredLeads = [];
   document.getElementById("scoutResultsArea").style.display = "none";
   document.getElementById("scoutResultsList").innerHTML = "";
+  
+  const loadingArea = document.getElementById("scoutLoadingArea");
+  if (loadingArea) loadingArea.style.display = "none";
+  
+  const errorArea = document.getElementById("scoutErrorArea");
+  if (errorArea) errorArea.style.display = "none";
+
+  const warningBanner = document.getElementById("scoutApiKeyWarning");
+  if (warningBanner) {
+    warningBanner.style.display = settings.geminiApiKey ? "none" : "flex";
+  }
+
   document.getElementById("modalScout").style.display = "flex";
 }
 
@@ -649,12 +661,30 @@ function closeScoutModal() {
   document.getElementById("modalScout").style.display = "none";
 }
 
+let scoutInterval = null;
+
 async function runScoutWithGemini() {
   const apiKey = settings.geminiApiKey;
+  const errorArea = document.getElementById("scoutErrorArea");
+  const errorTitle = document.getElementById("scoutErrorTitle");
+  const errorMsg = document.getElementById("scoutErrorMessage");
+  const fixKeyBtn = document.getElementById("btnScoutFixKey");
+  const loadingArea = document.getElementById("scoutLoadingArea");
+  const loadingStep = document.getElementById("scoutLoadingStep");
+  const loadingSub = document.getElementById("scoutLoadingSub");
+  const resultsArea = document.getElementById("scoutResultsArea");
+
+  if (errorArea) errorArea.style.display = "none";
+  if (resultsArea) resultsArea.style.display = "none";
+
   if (!apiKey) {
-    showToast("Please enter a fresh Gemini API Key in Settings (⚙️)");
-    closeScoutModal();
-    openSettingsModal();
+    if (errorArea) {
+      errorTitle.textContent = "Gemini API Key Required";
+      errorMsg.textContent = "Please add your free Google Gemini API Key in Settings (⚙️) to discover live leads.";
+      if (fixKeyBtn) fixKeyBtn.style.display = "inline-block";
+      errorArea.style.display = "flex";
+    }
+    showToast("Please configure your Gemini API Key in Settings (⚙️)");
     return;
   }
 
@@ -669,7 +699,28 @@ async function runScoutWithGemini() {
   const originalText = btnText.textContent;
 
   btn.disabled = true;
-  btnText.textContent = `Searching Google for ${lga}...`;
+  btnText.textContent = `Scouting Google for ${lga}...`;
+
+  // Start animated loading feedback
+  if (loadingArea) loadingArea.style.display = "flex";
+  const feedbackSteps = [
+    { title: "Connecting to Google Search...", sub: `Querying ${niche} in ${lga}, ${state}...` },
+    { title: "Scanning live business registries...", sub: "Extracting official websites and locations..." },
+    { title: "Verifying contact emails...", sub: "Filtering active owner/partner records..." },
+    { title: "Formatting prospect profiles...", sub: "Preparing verified pipeline leads..." }
+  ];
+
+  let stepIdx = 0;
+  if (loadingStep && loadingSub) {
+    loadingStep.textContent = feedbackSteps[0].title;
+    loadingSub.textContent = feedbackSteps[0].sub;
+    clearInterval(scoutInterval);
+    scoutInterval = setInterval(() => {
+      stepIdx = (stepIdx + 1) % feedbackSteps.length;
+      loadingStep.textContent = feedbackSteps[stepIdx].title;
+      loadingSub.textContent = feedbackSteps[stepIdx].sub;
+    }, 2800);
+  }
 
   const promptText = `Use Google Search to find exactly ${count} real, active ${niche} physically located or operating in ${lga}, ${state}, ${country}.
 For each business, extract their real firm name, owner or partner name (if unknown, use "there"), official website URL, public business/contact email address, and a 1-sentence observation about their specific services or specialty.
@@ -714,15 +765,28 @@ Output ONLY valid JSON. Do not include markdown code block formatting or explana
     if (Array.isArray(parsed) && parsed.length > 0) {
       discoveredLeads = parsed;
       renderScoutedResults(discoveredLeads);
-      document.getElementById("scoutResultsArea").style.display = "block";
+      if (loadingArea) loadingArea.style.display = "none";
+      if (resultsArea) resultsArea.style.display = "block";
       showToast(`Found ${discoveredLeads.length} authentic leads in ${lga}! ✨`);
     } else {
-      throw new Error("No leads found in response");
+      throw new Error("No leads parsed from Google Search results.");
     }
   } catch (err) {
     console.error("Scout Error:", err);
-    showToast(err.message.includes("leaked") ? "API key was flagged as leaked. Please generate a new key in Settings (⚙️)" : `Scout Error: ${err.message}`);
+    if (loadingArea) loadingArea.style.display = "none";
+    if (errorArea) {
+      const isLeaked = err.message.includes("leaked") || err.message.includes("PERMISSION_DENIED");
+      errorTitle.textContent = isLeaked ? "API Key Revoked / Expired (403)" : "Scout Error";
+      errorMsg.textContent = isLeaked
+        ? "This API key was flagged as leaked or expired by Google. Please generate a fresh free key at Google AI Studio and update it in Settings."
+        : `Could not retrieve leads: ${err.message}. Try broadening the location.`;
+      if (fixKeyBtn) fixKeyBtn.style.display = "inline-block";
+      errorArea.style.display = "flex";
+    }
+    showToast(`Scout Error: ${err.message}`);
   } finally {
+    clearInterval(scoutInterval);
+    if (loadingArea) loadingArea.style.display = "none";
     btn.disabled = false;
     btnText.textContent = originalText;
   }
@@ -937,6 +1001,22 @@ function setupEventListeners() {
   document.getElementById("btnCloseScout").addEventListener("click", closeScoutModal);
   document.getElementById("btnRunScout").addEventListener("click", runScoutWithGemini);
   document.getElementById("btnAddScoutedLeads").addEventListener("click", importScoutedLeads);
+
+  const btnScoutGoSettings = document.getElementById("btnScoutGoSettings");
+  if (btnScoutGoSettings) {
+    btnScoutGoSettings.addEventListener("click", () => {
+      closeScoutModal();
+      openSettingsModal();
+    });
+  }
+
+  const btnScoutFixKey = document.getElementById("btnScoutFixKey");
+  if (btnScoutFixKey) {
+    btnScoutFixKey.addEventListener("click", () => {
+      closeScoutModal();
+      openSettingsModal();
+    });
+  }
 
   // Settings
   document.getElementById("btnSettings").addEventListener("click", openSettingsModal);

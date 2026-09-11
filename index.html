@@ -315,6 +315,8 @@
         </div>
       </div>
     </div>
+  </div>
+
   <!-- Modal 4: AI Lead Scout (Location & Niche Discovery) -->
   <div id="modalScout" class="modal-overlay" style="display: none;">
     <div class="modal-sheet">
@@ -329,6 +331,16 @@
       </div>
 
       <div class="modal-body">
+        <!-- API Key Missing Warning (shown if no key is configured) -->
+        <div id="scoutApiKeyWarning" class="scout-warning-banner" style="display: none;">
+          <div class="scout-warning-icon">⚠️</div>
+          <div class="scout-warning-content">
+            <strong>Gemini API Key Required</strong>
+            <p>Live lead scouting requires a free Google Gemini key.</p>
+            <button id="btnScoutGoSettings" type="button" class="btn-warning-action">Open Settings (⚙️) to Add Key</button>
+          </div>
+        </div>
+
         <p class="scout-explainer">
           Gemini searches Google live to extract real, active businesses with verified websites and contact emails in your target Country, State, and LGA/City.
         </p>
@@ -375,6 +387,25 @@
           <span class="ai-sparkle">✨</span>
           <span id="scoutBtnText">Scout Live Leads with Google</span>
         </button>
+
+        <!-- Live Search Progress Indicator -->
+        <div id="scoutLoadingArea" class="scout-loading-box" style="display: none;">
+          <div class="scout-spinner"></div>
+          <div class="scout-loading-text">
+            <span id="scoutLoadingStep" class="scout-step-title">Connecting to Google Search...</span>
+            <span id="scoutLoadingSub" class="scout-step-sub">Scanning active businesses in target area</span>
+          </div>
+        </div>
+
+        <!-- Error Feedback Area -->
+        <div id="scoutErrorArea" class="scout-error-box" style="display: none;">
+          <div class="scout-error-icon">❌</div>
+          <div class="scout-error-content">
+            <strong id="scoutErrorTitle">Scout Encountered an Error</strong>
+            <p id="scoutErrorMessage">Error details will appear here.</p>
+            <button id="btnScoutFixKey" type="button" class="btn-warning-action" style="display: none;">Update API Key in Settings</button>
+          </div>
+        </div>
 
         <!-- Discovered Leads Preview -->
         <div id="scoutResultsArea" style="display: none; margin-top: 18px;">

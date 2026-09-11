@@ -900,3 +900,125 @@ body {
   color: #08080A !important;
   box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
 }
+
+/* Scout Feedback & Loading UI */
+.scout-warning-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.scout-warning-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.scout-warning-content strong {
+  display: block;
+  font-size: 13px;
+  color: #FBBF24;
+  margin-bottom: 2px;
+}
+
+.scout-warning-content p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.btn-warning-action {
+  background: #F59E0B;
+  color: #08080A;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-block;
+  transition: opacity 0.2s;
+}
+
+.btn-warning-action:active {
+  opacity: 0.8;
+}
+
+.scout-loading-box {
+  margin-top: 14px;
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.scout-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(0, 240, 255, 0.2);
+  border-top-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.scout-loading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.scout-step-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+
+.scout-step-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.scout-error-box {
+  margin-top: 14px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.scout-error-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.scout-error-content strong {
+  display: block;
+  font-size: 13px;
+  color: #F87171;
+  margin-bottom: 3px;
+}
+
+.scout-error-content p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
