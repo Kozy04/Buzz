@@ -274,9 +274,12 @@
         <div class="settings-group">
           <div class="body-label-row" style="margin-top: 0; margin-bottom: 6px;">
             <label class="input-label" for="settingsGeminiKey" style="margin-bottom: 0;">Google Gemini API Key</label>
-            <span class="auto-hint">Google AI Studio</span>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="auto-hint" style="text-decoration: underline;">Get Free Key ↗</a>
           </div>
-          <input type="password" id="settingsGeminiKey" class="text-input" placeholder="AIzaSy..." />
+          <input type="password" id="settingsGeminiKey" class="text-input" placeholder="Paste your AIzaSy... key here" />
+          <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: -6px;">
+            🔒 Stored locally in your device's browser only. Never saved to GitHub.
+          </span>
         </div>
 
         <hr class="settings-divider" />

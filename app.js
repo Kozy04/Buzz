@@ -118,7 +118,7 @@ let activeTemplate = "receipt";
 let settings = {
   senderName: "Founder, SmartRename AI",
   productUrl: "https://smartrenameai.online",
-  geminiApiKey: "AIzaSyDomMXLi9JjVyvWoMQuNRu3QwsyXjQPQqc"
+  geminiApiKey: ""
 };
 
 // Templates
@@ -227,7 +227,7 @@ function saveData() {
 function saveSettings() {
   settings.senderName = document.getElementById("settingsSenderName").value.trim() || "Founder, SmartRename AI";
   settings.productUrl = document.getElementById("settingsProductUrl").value.trim() || "https://smartrenameai.online";
-  settings.geminiApiKey = document.getElementById("settingsGeminiKey").value.trim() || "AIzaSyDomMXLi9JjVyvWoMQuNRu3QwsyXjQPQqc";
+  settings.geminiApiKey = document.getElementById("settingsGeminiKey").value.trim();
   localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
   showToast("Settings saved");
 }
@@ -392,9 +392,10 @@ function updateDrafterContent() {
 async function generateWithGemini() {
   if (!activeLead) return;
 
-  const apiKey = settings.geminiApiKey || "AIzaSyDomMXLi9JjVyvWoMQuNRu3QwsyXjQPQqc";
+  const apiKey = settings.geminiApiKey;
   if (!apiKey) {
-    showToast("Please enter a Gemini API Key in Settings");
+    showToast("Please enter a fresh Gemini API Key in Settings (⚙️)");
+    openSettingsModal();
     return;
   }
 
@@ -447,7 +448,9 @@ BODY:
     });
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      const errJson = await response.json().catch(() => ({}));
+      const msg = errJson?.error?.message || `API error: ${response.status}`;
+      throw new Error(msg);
     }
 
     const data = await response.json();
@@ -472,7 +475,7 @@ BODY:
     }
   } catch (err) {
     console.error("Gemini Generation Error:", err);
-    showToast("AI drafting failed. Check API key.");
+    showToast(err.message.includes("leaked") ? "API key was flagged. Please generate a new key in Settings (⚙️)" : `AI error: ${err.message}`);
   } finally {
     aiBtn.classList.remove("loading");
     aiBtnText.textContent = originalText;
@@ -647,9 +650,11 @@ function closeScoutModal() {
 }
 
 async function runScoutWithGemini() {
-  const apiKey = settings.geminiApiKey || "AIzaSyDomMXLi9JjVyvWoMQuNRu3QwsyXjQPQqc";
+  const apiKey = settings.geminiApiKey;
   if (!apiKey) {
-    showToast("Please provide a Gemini API key in Settings");
+    showToast("Please enter a fresh Gemini API Key in Settings (⚙️)");
+    closeScoutModal();
+    openSettingsModal();
     return;
   }
 
@@ -693,7 +698,9 @@ Output ONLY valid JSON. Do not include markdown code block formatting or explana
     });
 
     if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status}`);
+      const errJson = await response.json().catch(() => ({}));
+      const msg = errJson?.error?.message || `Gemini API error: ${response.status}`;
+      throw new Error(msg);
     }
 
     const data = await response.json();
@@ -714,7 +721,7 @@ Output ONLY valid JSON. Do not include markdown code block formatting or explana
     }
   } catch (err) {
     console.error("Scout Error:", err);
-    showToast("Search failed or no leads parsed. Try a broader city/LGA.");
+    showToast(err.message.includes("leaked") ? "API key was flagged as leaked. Please generate a new key in Settings (⚙️)" : `Scout Error: ${err.message}`);
   } finally {
     btn.disabled = false;
     btnText.textContent = originalText;
