@@ -98,6 +98,17 @@
         <button class="filter-chip" data-filter="sample">Sample Sent (<span id="countSample">0</span>)</button>
         <button class="filter-chip" data-filter="won">Won ($) (<span id="countWon">0</span>)</button>
       </div>
+
+      <!-- Bulk Selection Toolbar -->
+      <div class="bulk-control-bar">
+        <label class="bulk-select-all-label">
+          <input type="checkbox" id="chkSelectAllLeads" class="custom-checkbox" />
+          <span id="lblSelectAll">Select All Pending (<span id="countSelectablePending">10</span>)</span>
+        </label>
+        <button id="btnTriggerAutoPilotTop" type="button" class="btn-autopilot-sm" style="display: none;">
+          <span>⚡ Auto-Pilot Bulk Send (<span id="bulkCountBadgeTop">0</span>)</span>
+        </button>
+      </div>
     </section>
 
     <!-- Leads Feed -->
@@ -111,6 +122,21 @@
         <p>Try clearing your search or add a new lead below.</p>
       </div>
     </main>
+
+    <!-- Floating Bulk Outreach Action Bar -->
+    <div id="floatingBulkBar" class="floating-bulk-bar" style="display: none;">
+      <div class="bulk-bar-info">
+        <span class="bulk-indicator-dot"></span>
+        <div>
+          <strong id="floatingBulkCount">0 Leads</strong>
+          <span class="bulk-subtext">Selected for Auto-Pilot Outreach</span>
+        </div>
+      </div>
+      <button id="btnRunBulkAutoPilot" type="button" class="btn-bulk-launch">
+        <span class="ai-sparkle">⚡</span>
+        <span>Run Auto-Pilot Campaign</span>
+      </button>
+    </div>
 
     <!-- Bottom Action Bar / Floating Action Button -->
     <div class="fab-wrapper">
@@ -275,7 +301,7 @@
             <line x1="22" y1="2" x2="11" y2="13"></line>
             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
           </svg>
-          <span>Send via Mail App</span>
+          <span id="btnLaunchMailText">Send via Mail App</span>
         </button>
       </div>
 
@@ -425,6 +451,78 @@
           </span>
         </div>
 
+        <!-- Direct Email Dispatch Engine (cPanel & Gmail Webhook) -->
+        <div class="settings-group dispatch-settings-card">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <label class="input-label" style="color: var(--accent-cyan); margin-bottom: 0; font-weight: 700;">
+              ⚡ Direct Email Dispatch &amp; Bulk Engine
+            </label>
+            <span class="badge-dispatch-tag">Automated</span>
+          </div>
+          <span style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 10px; line-height: 1.4;">
+            Send emails directly in the background with auto-attached branded mockups and hands-free multi-lead bulk sending.
+          </span>
+
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label class="input-label" for="settingsDispatchEngine">Dispatch Gateway Method</label>
+            <select id="settingsDispatchEngine" class="text-input select-input" style="font-size: 12px; padding: 7px 10px;">
+              <option value="cpanel" selected>Method 1: cPanel PHP Bridge (buzz-send.php)</option>
+              <option value="googleScript">Method 2: Google Apps Script Webhook (Gmail / Alias)</option>
+              <option value="mailto">Method 3: Default Mail App (mailto: - no attachments)</option>
+            </select>
+          </div>
+
+          <div id="dispatchGatewayConfigArea">
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label class="input-label" for="settingsDispatchUrl">
+                <span id="lblDispatchUrl">cPanel Bridge URL *</span>
+              </label>
+              <input type="url" id="settingsDispatchUrl" class="text-input" placeholder="https://yourdomain.com/buzz-send.php" />
+              <span id="hintDispatchUrl" style="font-size: 10.5px; color: var(--text-muted); display: block; margin-top: 4px;">
+                Upload <code>buzz-send.php</code> to your cPanel <code>public_html</code>.
+              </span>
+            </div>
+
+            <div class="form-row" style="margin-bottom: 10px;">
+              <div class="form-group">
+                <label class="input-label" for="settingsDispatchFromEmail">From Email Address *</label>
+                <input type="email" id="settingsDispatchFromEmail" class="text-input" placeholder="you@yourdomain.com" />
+              </div>
+              <div class="form-group">
+                <label class="input-label" for="settingsDispatchFromName">From Sender Name</label>
+                <input type="text" id="settingsDispatchFromName" class="text-input" placeholder="e.g. Korede" />
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label class="input-label" for="settingsDispatchSecret">Security Secret / Token (Optional)</label>
+              <input type="text" id="settingsDispatchSecret" class="text-input" placeholder="Optional security key" />
+            </div>
+
+            <!-- Setup Guides Box with Copy & Download Actions -->
+            <div class="dispatch-guide-box">
+              <div class="dispatch-guide-header">
+                <span id="dispatchGuideTitle" style="font-weight: 600; font-size: 11px; color: var(--text-secondary);">cPanel Quick Setup:</span>
+                <div style="display: flex; gap: 6px;">
+                  <button type="button" id="btnCopyDispatchScript" class="btn-xs-copy">📋 Copy Code</button>
+                  <a id="btnDownloadPhpScript" href="./buzz-send.php" download="buzz-send.php" class="btn-xs-copy" style="text-decoration: none; display: inline-flex; align-items: center;">📥 Download File</a>
+                </div>
+              </div>
+              <div id="dispatchGuideInstructions" class="dispatch-guide-content">
+                1. Upload <code>buzz-send.php</code> to your cPanel <code>public_html</code>.<br/>
+                2. Enter your URL above (e.g. <code>https://yourdomain.com/buzz-send.php</code>).<br/>
+                3. Enter your cPanel email (e.g. <code>you@yourdomain.com</code>) &amp; hit save!
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 10px;">
+              <button id="btnTestDispatch" type="button" class="btn-secondary" style="font-size: 12px; padding: 7px 12px; flex: 1;">
+                🧪 Test Direct Dispatch
+              </button>
+            </div>
+          </div>
+        </div>
+
         <button id="btnSaveSettingsManual" type="button" class="btn-primary" style="width: 100%; margin-top: 4px; margin-bottom: 12px;">
           ✓ Save Profile & Settings
         </button>
@@ -569,6 +667,50 @@
           <button id="btnAddScoutedLeads" class="btn-primary btn-import-all" style="width: 100%; margin-top: 12px;">
             ✓ Import Discovered Leads to Pipeline
           </button>
+        </div>
+      </div>
+  <!-- Modal 5: Auto-Pilot Bulk Campaign Runner -->
+  <div id="modalAutoPilot" class="modal-overlay" style="display: none;">
+    <div class="modal-sheet modal-sheet-autopilot">
+      <div class="sheet-handle"></div>
+      
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>⚡ Auto-Pilot Bulk Campaign</h2>
+          <span id="autoPilotSubtext" class="email-subtext">Automated Outreach with AI Personalization & Branded Mockups</span>
+        </div>
+        <button id="btnCloseAutoPilot" class="close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body autopilot-body">
+        <!-- Progress Header Card -->
+        <div class="autopilot-progress-card">
+          <div class="autopilot-stats-row">
+            <span id="autopilotProgressLabel" class="autopilot-step-title">Initializing campaign...</span>
+            <span id="autopilotCounter" class="autopilot-counter-badge">0 / 0</span>
+          </div>
+          <div class="autopilot-progress-track">
+            <div id="autopilotProgressBar" class="autopilot-progress-fill" style="width: 0%;"></div>
+          </div>
+          <div class="autopilot-current-action">
+            <span id="autopilotCurrentFirm" class="autopilot-firm-name">Targeting Prospects</span>
+            <span id="autopilotCurrentDetail" class="autopilot-firm-detail">Preparing automated queue...</span>
+          </div>
+        </div>
+
+        <!-- Live Queue Execution Log -->
+        <div class="autopilot-queue-container">
+          <div class="queue-header-label">CAMPAIGN EXECUTION LOG:</div>
+          <div id="autopilotQueueList" class="autopilot-queue-list">
+            <!-- Items injected via JS -->
+          </div>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="autopilot-actions-row">
+          <button id="btnPauseAutoPilot" class="btn-secondary" style="display: none;">⏸ Pause Campaign</button>
+          <button id="btnResumeAutoPilot" class="btn-secondary" style="display: none;">▶ Resume Campaign</button>
+          <button id="btnDoneAutoPilot" class="btn-primary" style="width: 100%; display: none;">✓ Done & Back to Pipeline</button>
         </div>
       </div>
     </div>

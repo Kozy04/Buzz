@@ -177,10 +177,77 @@ let settings = {
   valueProp: "Eliminates hours of manual document sorting by using vision AI to auto-rename receipts, statements, and invoices and build clean client folders in seconds.",
   offer: "Process 15-20 of your messiest sample client files for free in 5 minutes so you can see the speed",
   targetNiche: "Boutique Bookkeeping & Accounting Firms",
-  geminiApiKey: ""
+  geminiApiKey: "",
+  dispatchEngine: "cpanel",
+  dispatchUrl: "",
+  dispatchFromEmail: "",
+  dispatchFromName: "",
+  dispatchSecret: ""
 };
 
 let selectedFollowUpScheduleDays = 3;
+let selectedLeadIds = new Set();
+let autoPilotRunning = false;
+let autoPilotPaused = false;
+
+// Direct Dispatch Script Templates (1-Click Copy)
+const CPANEL_PHP_CODE = `<?php
+// Buzz Outreach Engine - cPanel Direct Email Bridge
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, X-Buzz-Secret, Authorization");
+header("Content-Type: application/json; charset=UTF-8");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit(0); }
+$payload = json_decode(file_get_contents("php://input"), true);
+if (!$payload) { http_response_code(400); echo json_encode(["status" => "error", "message" => "Invalid JSON"]); exit; }
+
+$to = filter_var($payload['to'] ?? '', FILTER_VALIDATE_EMAIL);
+$subject = $payload['subject'] ?? 'Hello';
+$body = $payload['body'] ?? '';
+$fromEmail = filter_var($payload['fromEmail'] ?? '', FILTER_VALIDATE_EMAIL) ?: "noreply@" . $_SERVER['HTTP_HOST'];
+$fromName = $payload['fromName'] ?? 'Outreach Team';
+$attachmentBase64 = $payload['attachmentBase64'] ?? '';
+$attachmentName = $payload['attachmentName'] ?? 'workflow_mockup.jpg';
+
+$boundary = "==Multipart_Boundary_x" . md5(time()) . "x";
+$headers = "From: =?UTF-8?B?" . base64_encode($fromName) . "?= <{$fromEmail}>\\r\\n";
+$headers .= "Reply-To: {$fromEmail}\\r\\nMIME-Version: 1.0\\r\\nContent-Type: multipart/mixed; boundary=\\"{$boundary}\\"\\r\\n";
+
+$msg = "--{$boundary}\\r\\nContent-Type: text/plain; charset=UTF-8\\r\\nContent-Transfer-Encoding: 8bit\\r\\n\\r\\n{$body}\\r\\n\\r\\n";
+if (!empty($attachmentBase64)) {
+    $clean = preg_replace('/^data:image\\/\\w+;base64,/', '', $attachmentBase64);
+    $encoded = chunk_split(base64_encode(base64_decode($clean)));
+    $msg .= "--{$boundary}\\r\\nContent-Type: image/jpeg; name=\\"{$attachmentName}\\"\\r\\nContent-Disposition: attachment; filename=\\"{$attachmentName}\\"\\r\\nContent-Transfer-Encoding: base64\\r\\n\\r\\n{$encoded}\\r\\n\\r\\n";
+}
+$msg .= "--{$boundary}--";
+
+if (@mail($to, "=?UTF-8?B?" . base64_encode($subject) . "?=", $msg, $headers, "-f" . $fromEmail)) {
+    echo json_encode(["status" => "success", "recipient" => $to]);
+} else {
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => "mail() failed. Verify cPanel email service."]);
+}
+?>`;
+
+const GOOGLE_APPS_SCRIPT_CODE = `function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var options = { name: data.fromName || "SmartRename AI" };
+    if (data.fromEmail) options.from = data.fromEmail;
+    
+    if (data.attachmentBase64) {
+      var cleanBase64 = data.attachmentBase64.replace(/^data:image\\/\\w+;base64,/, "");
+      var blob = Utilities.newBlob(Utilities.base64Decode(cleanBase64), "image/jpeg", data.attachmentName || "workflow_mockup.jpg");
+      options.attachments = [blob];
+    }
+    
+    GmailApp.sendEmail(data.to, data.subject, data.body, options);
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", recipient: data.to })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}`;
 
 // Templates (Initial Hooks + 3-Stage Follow-Up Cadence)
 const TEMPLATES = {
@@ -465,6 +532,24 @@ function loadData() {
   const gKey = document.getElementById("settingsGeminiKey");
   if (gKey) gKey.value = settings.geminiApiKey || "";
 
+  // Direct Dispatch Configuration
+  const dEngine = document.getElementById("settingsDispatchEngine");
+  if (dEngine) dEngine.value = settings.dispatchEngine || "cpanel";
+
+  const dUrl = document.getElementById("settingsDispatchUrl");
+  if (dUrl) dUrl.value = settings.dispatchUrl || "";
+
+  const dFromEmail = document.getElementById("settingsDispatchFromEmail");
+  if (dFromEmail) dFromEmail.value = settings.dispatchFromEmail || "";
+
+  const dFromName = document.getElementById("settingsDispatchFromName");
+  if (dFromName) dFromName.value = settings.dispatchFromName || "";
+
+  const dSecret = document.getElementById("settingsDispatchSecret");
+  if (dSecret) dSecret.value = settings.dispatchSecret || "";
+
+  updateDispatchGuideUI();
+  updateLaunchMailButtonText();
   updateHeaderBranding();
 }
 
@@ -490,12 +575,211 @@ function saveSettings() {
   settings.offer = document.getElementById("settingsOffer")?.value.trim() || "Free test on sample files";
   settings.geminiApiKey = document.getElementById("settingsGeminiKey")?.value.trim() || "";
 
+  // Direct Dispatch Settings
+  settings.dispatchEngine = document.getElementById("settingsDispatchEngine")?.value || "cpanel";
+  settings.dispatchUrl = document.getElementById("settingsDispatchUrl")?.value.trim() || "";
+  settings.dispatchFromEmail = document.getElementById("settingsDispatchFromEmail")?.value.trim() || "";
+  settings.dispatchFromName = document.getElementById("settingsDispatchFromName")?.value.trim() || "";
+  settings.dispatchSecret = document.getElementById("settingsDispatchSecret")?.value.trim() || "";
+
   localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
   updateHeaderBranding();
+  updateDispatchGuideUI();
+  updateLaunchMailButtonText();
   if (activeLead) {
     updateDrafterContent();
   }
   showToast("Profile & Settings saved! 🏢");
+}
+
+function updateDispatchGuideUI() {
+  const engine = document.getElementById("settingsDispatchEngine")?.value || settings.dispatchEngine || "cpanel";
+  const configArea = document.getElementById("dispatchGatewayConfigArea");
+  const lblUrl = document.getElementById("lblDispatchUrl");
+  const inputUrl = document.getElementById("settingsDispatchUrl");
+  const hintUrl = document.getElementById("hintDispatchUrl");
+  const guideTitle = document.getElementById("dispatchGuideTitle");
+  const btnDownload = document.getElementById("btnDownloadPhpScript");
+  const btnCopy = document.getElementById("btnCopyDispatchScript");
+  const guideInst = document.getElementById("dispatchGuideInstructions");
+
+  if (!configArea) return;
+
+  if (engine === "mailto") {
+    configArea.style.display = "none";
+    return;
+  }
+
+  configArea.style.display = "block";
+
+  if (engine === "cpanel") {
+    if (lblUrl) lblUrl.textContent = "cPanel Bridge URL *";
+    if (inputUrl) inputUrl.placeholder = "https://yourdomain.com/buzz-send.php";
+    if (hintUrl) hintUrl.innerHTML = "Upload <code>buzz-send.php</code> to your cPanel <code>public_html</code>.";
+    if (guideTitle) guideTitle.textContent = "cPanel Quick Setup:";
+    if (btnDownload) btnDownload.style.display = "inline-flex";
+    if (btnCopy) btnCopy.textContent = "📋 Copy PHP Code";
+    if (guideInst) {
+      guideInst.innerHTML = `1. Upload <code>buzz-send.php</code> to your cPanel <code>public_html</code>.<br/>2. Enter your URL above (e.g. <code>https://yourdomain.com/buzz-send.php</code>).<br/>3. Enter your cPanel email (e.g. <code>you@yourdomain.com</code>) &amp; hit save!`;
+    }
+  } else if (engine === "googleScript") {
+    if (lblUrl) lblUrl.textContent = "Google Apps Script Webhook URL *";
+    if (inputUrl) inputUrl.placeholder = "https://script.google.com/macros/s/.../exec";
+    if (hintUrl) hintUrl.innerHTML = "Paste the Web App URL deployed from Google Apps Script.";
+    if (guideTitle) guideTitle.textContent = "Google Apps Script Setup:";
+    if (btnDownload) btnDownload.style.display = "none";
+    if (btnCopy) btnCopy.textContent = "📋 Copy Google Script Code";
+    if (guideInst) {
+      guideInst.innerHTML = `1. Go to <a href="https://script.google.com" target="_blank" style="color: var(--accent-cyan); text-decoration: underline;">script.google.com</a> &amp; create New Project.<br/>2. Click "Copy Google Script Code", paste it, then click <strong>Deploy &gt; New deployment &gt; Web app</strong>.<br/>3. Set <em>Execute as: Me</em> &amp; <em>Who has access: Anyone</em>, then paste the URL above!`;
+    }
+  }
+}
+
+function copyDispatchScript() {
+  const engine = document.getElementById("settingsDispatchEngine")?.value || settings.dispatchEngine || "cpanel";
+  const codeToCopy = (engine === "googleScript") ? GOOGLE_APPS_SCRIPT_CODE : CPANEL_PHP_CODE;
+  const label = (engine === "googleScript") ? "Google Apps Script" : "cPanel PHP bridge";
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(codeToCopy).then(() => {
+      showToast(`${label} code copied to clipboard! 📋`);
+    }).catch(() => {
+      fallbackCopy(codeToCopy);
+      showToast(`${label} code copied! 📋`);
+    });
+  } else {
+    fallbackCopy(codeToCopy);
+    showToast(`${label} code copied! 📋`);
+  }
+}
+
+function updateLaunchMailButtonText() {
+  const btnText = document.getElementById("btnLaunchMailText");
+  if (!btnText) return;
+
+  const isDirect = (settings.dispatchEngine === "cpanel" || settings.dispatchEngine === "googleScript") && settings.dispatchUrl;
+  if (isDirect) {
+    btnText.textContent = "🚀 Send Directly (With Mockup)";
+  } else {
+    btnText.textContent = "Send via Mail App (mailto:)";
+  }
+}
+
+// Direct Email Dispatch Engine Call
+async function sendEmailDirectly({ to, subject, body, attachmentBase64, attachmentName }) {
+  const engine = settings.dispatchEngine || "cpanel";
+  const url = settings.dispatchUrl?.trim();
+
+  if (engine === "mailto" || !url) {
+    return { success: false, fallback: true, message: "Direct dispatch URL not configured in Settings." };
+  }
+
+  const payload = {
+    to: to.trim(),
+    subject: subject.trim(),
+    body: body.trim(),
+    fromEmail: settings.dispatchFromEmail?.trim() || "",
+    fromName: settings.dispatchFromName?.trim() || settings.senderName || "SmartRename AI",
+    secretKey: settings.dispatchSecret?.trim() || "",
+    attachmentBase64: attachmentBase64 || "",
+    attachmentName: attachmentName || "workflow_mockup.jpg"
+  };
+
+  try {
+    let response;
+    if (engine === "googleScript") {
+      // Use text/plain to prevent browser preflight CORS block on Google Script webhooks
+      response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      // cPanel PHP Bridge
+      response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(settings.dispatchSecret ? { "X-Buzz-Secret": settings.dispatchSecret } : {})
+        },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => "");
+      throw new Error(`Server returned HTTP ${response.status}: ${errText.slice(0, 120)}`);
+    }
+
+    const data = await response.json().catch(() => ({ status: "success" }));
+    if (data.status === "error") {
+      throw new Error(data.message || "Dispatch error occurred");
+    }
+
+    return { success: true, recipient: to };
+  } catch (err) {
+    console.error("Direct send failure:", err);
+    return { success: false, fallback: false, message: err.message };
+  }
+}
+
+// Test Direct Dispatch Connection
+async function testDirectDispatch() {
+  const url = document.getElementById("settingsDispatchUrl")?.value.trim();
+  const fromEmail = document.getElementById("settingsDispatchFromEmail")?.value.trim();
+  const engine = document.getElementById("settingsDispatchEngine")?.value || "cpanel";
+
+  if (!url) {
+    showToast("Please enter your Bridge / Webhook URL first.");
+    return;
+  }
+  if (!fromEmail) {
+    showToast("Please enter your sender email to receive test message.");
+    return;
+  }
+
+  const btn = document.getElementById("btnTestDispatch");
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Testing dispatch connection...";
+
+  // Temporarily update settings for the test
+  settings.dispatchUrl = url;
+  settings.dispatchFromEmail = fromEmail;
+  settings.dispatchEngine = engine;
+  settings.dispatchFromName = document.getElementById("settingsDispatchFromName")?.value.trim() || settings.senderName;
+  settings.dispatchSecret = document.getElementById("settingsDispatchSecret")?.value.trim() || "";
+
+  // Render sample canvas mockup attachment
+  const sampleAttachment = generateCanvasMockup(
+    "Connection Test Partner",
+    "Tester",
+    "Global",
+    "beforeAfter",
+    settings.businessName,
+    settings.valueProp
+  );
+
+  const testResult = await sendEmailDirectly({
+    to: fromEmail,
+    subject: "Buzz Outreach Test - Connection Verified! 🚀",
+    body: `Hello,\n\nGreat news! Your Buzz Outreach direct email bridge is functioning smoothly.\n\nGateway Engine: ${engine}\nSender: ${fromEmail}\nTimestamp: ${new Date().toLocaleString()}\n\nYou can now run automated 1-click single sends and Auto-Pilot bulk campaigns with high-resolution mockups attached!`,
+    attachmentBase64: sampleAttachment,
+    attachmentName: "test_verified_mockup.jpg"
+  });
+
+  btn.disabled = false;
+  btn.textContent = origText;
+
+  if (testResult.success) {
+    alert(`✅ Success! Test email with branded mockup attachment dispatched directly to ${fromEmail}. Check your inbox!`);
+    showToast("Test email dispatched successfully! 🎉");
+  } else {
+    alert(`❌ Direct Dispatch Test Failed:\n\n${testResult.message}\n\nPlease check that your script/webhook URL is correct and accessible.`);
+    showToast(`Test failed: ${testResult.message}`);
+  }
 }
 
 function handleProfilePresetChange(e) {
@@ -582,8 +866,9 @@ function renderLeadsList() {
   emptyState.style.display = "none";
 
   filtered.forEach(lead => {
+    const isSelected = selectedLeadIds.has(lead.id);
     const card = document.createElement("div");
-    card.className = "lead-card";
+    card.className = `lead-card has-checkbox ${isSelected ? "selected-for-bulk" : ""}`;
 
     const statusBadgeClass = `badge-${lead.status}`;
     const statusLabelMap = {
@@ -619,6 +904,10 @@ function renderLeadsList() {
     }
 
     card.innerHTML = `
+      <div class="lead-card-checkbox-wrapper" onclick="event.stopPropagation()">
+        <input type="checkbox" class="lead-select-chk custom-checkbox" data-id="${lead.id}" ${isSelected ? "checked" : ""} />
+      </div>
+
       <div class="lead-card-header">
         <div>
           <h3 class="lead-firm-title">${escapeHtml(lead.firmName)}</h3>
@@ -682,6 +971,15 @@ function renderLeadsList() {
       </div>
     `;
 
+    // Checkbox event
+    const chk = card.querySelector(".lead-select-chk");
+    if (chk) {
+      chk.addEventListener("change", (e) => {
+        e.stopPropagation();
+        toggleLeadSelection(lead.id, e.target.checked);
+      });
+    }
+
     // Event handlers inside card
     card.querySelector(".btn-open-draft").addEventListener("click", () => openDrafter(lead));
     card.querySelector(".edit-lead-btn").addEventListener("click", () => openEditLeadModal(lead));
@@ -710,6 +1008,71 @@ function renderLeadsList() {
 
     container.appendChild(card);
   });
+
+  updateBulkUI();
+}
+
+function toggleLeadSelection(leadId, isSelected) {
+  if (isSelected) {
+    selectedLeadIds.add(leadId);
+  } else {
+    selectedLeadIds.delete(leadId);
+  }
+  updateBulkUI();
+  // Update card selected style in place
+  const cardChk = document.querySelector(`.lead-select-chk[data-id="${leadId}"]`);
+  if (cardChk) {
+    const card = cardChk.closest(".lead-card");
+    if (card) {
+      card.classList.toggle("selected-for-bulk", isSelected);
+    }
+  }
+}
+
+function toggleSelectAllPending(e) {
+  const isChecked = e.target.checked;
+  const pendingLeads = leads.filter(l => l.status === "pending");
+  if (isChecked) {
+    pendingLeads.forEach(l => selectedLeadIds.add(l.id));
+  } else {
+    pendingLeads.forEach(l => selectedLeadIds.delete(l.id));
+  }
+  updateBulkUI();
+  renderLeadsList();
+}
+
+function updateBulkUI() {
+  const pendingLeads = leads.filter(l => l.status === "pending");
+  const pendingCount = pendingLeads.length;
+  
+  const countSelectablePending = document.getElementById("countSelectablePending");
+  if (countSelectablePending) countSelectablePending.textContent = pendingCount;
+
+  const count = selectedLeadIds.size;
+  const floatingBulkBar = document.getElementById("floatingBulkBar");
+  const floatingBulkCount = document.getElementById("floatingBulkCount");
+  const bulkCountBadgeTop = document.getElementById("bulkCountBadgeTop");
+  const btnTriggerAutoPilotTop = document.getElementById("btnTriggerAutoPilotTop");
+  const chkSelectAll = document.getElementById("chkSelectAllLeads");
+
+  if (floatingBulkBar) {
+    floatingBulkBar.style.display = count > 0 ? "flex" : "none";
+  }
+  if (floatingBulkCount) {
+    floatingBulkCount.textContent = `${count} Lead${count === 1 ? "" : "s"}`;
+  }
+  if (btnTriggerAutoPilotTop) {
+    btnTriggerAutoPilotTop.style.display = count > 0 ? "inline-flex" : "none";
+  }
+  if (bulkCountBadgeTop) {
+    bulkCountBadgeTop.textContent = count;
+  }
+  if (chkSelectAll && pendingCount > 0) {
+    const allSelected = pendingLeads.every(l => selectedLeadIds.has(l.id));
+    chkSelectAll.checked = allSelected;
+  } else if (chkSelectAll) {
+    chkSelectAll.checked = false;
+  }
 }
 
 // ==========================================
@@ -1002,14 +1365,95 @@ function closeDrafter() {
   activeLead = null;
 }
 
-// Launch Email App (mailto:)
-function launchMailApp() {
+// Launch Email App (Direct Dispatch or mailto: fallback)
+async function launchMailApp() {
   if (!activeLead) return;
   const subject = document.getElementById("drafterSubject").value;
   const body = document.getElementById("drafterBody").value;
 
+  const isDirect = (settings.dispatchEngine === "cpanel" || settings.dispatchEngine === "googleScript") && settings.dispatchUrl;
+
+  if (isDirect) {
+    const btn = document.getElementById("btnLaunchMail");
+    const btnText = document.getElementById("btnLaunchMailText");
+    const origText = btnText ? btnText.textContent : "Send";
+    if (btn) btn.disabled = true;
+    if (btnText) btnText.textContent = "Dispatching directly...";
+
+    try {
+      // Ensure we have a high-resolution branded mockup to attach!
+      let attachment = currentMockupBase64;
+      if (!attachment) {
+        attachment = generateCanvasMockup(
+          activeLead.firmName,
+          activeLead.firstName,
+          activeLead.location,
+          "beforeAfter",
+          settings.businessName,
+          settings.valueProp
+        );
+      }
+
+      // Auto-append P.S. note if not present
+      let finalBody = body;
+      if (!finalBody.includes("P.S. I put together a quick visual preview")) {
+        finalBody = finalBody.trim() + `\n\nP.S. I put together a quick visual preview of what ${activeLead.firmName}'s workflow looks like with ${settings.businessName}—see the attached image!`;
+        document.getElementById("drafterBody").value = finalBody;
+      }
+
+      const cleanFirm = (activeLead.firmName || "lead").toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const result = await sendEmailDirectly({
+        to: activeLead.email,
+        subject,
+        body: finalBody,
+        attachmentBase64: attachment,
+        attachmentName: `${cleanFirm}_workflow_mockup.jpg`
+      });
+
+      if (result.success) {
+        // Advance cadence tracking
+        activeLead.status = "contacted";
+        activeLead.followUpCount = (activeLead.followUpCount || 0) + 1;
+        activeLead.lastContactedAt = new Date().toISOString();
+        if (selectedFollowUpScheduleDays > 0) {
+          activeLead.followUpDueAt = new Date(Date.now() + selectedFollowUpScheduleDays * 86400000).toISOString();
+        } else {
+          activeLead.followUpDueAt = null;
+        }
+
+        saveData();
+        renderApp();
+        updateDrafterStatusPills("contacted");
+
+        const schedMsg = selectedFollowUpScheduleDays > 0
+          ? `Follow-up #${activeLead.followUpCount + 1} in +${selectedFollowUpScheduleDays} days 📅`
+          : `Follow-up off`;
+
+        showToast(`🚀 Dispatched directly to ${activeLead.email} with mockup attached! ${schedMsg}`);
+        setTimeout(() => closeDrafter(), 800);
+        return;
+      } else {
+        const tryFallback = confirm(`Direct send failed: ${result.message}\n\nWould you like to open your local Mail client (mailto:) instead?`);
+        if (tryFallback) {
+          triggerMailtoFallback(subject, body);
+        }
+      }
+    } catch (err) {
+      showToast(`Send error: ${err.message}`);
+    } finally {
+      if (btn) btn.disabled = false;
+      if (btnText) btnText.textContent = origText;
+    }
+  } else {
+    // Default fallback to local mailto:
+    triggerMailtoFallback(subject, body);
+  }
+}
+
+function triggerMailtoFallback(subject, body) {
+  if (!activeLead) return;
   const mailtoUrl = `mailto:${encodeURIComponent(activeLead.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  
+
   // Advance cadence tracking
   activeLead.status = "contacted";
   activeLead.followUpCount = (activeLead.followUpCount || 0) + 1;
@@ -2066,6 +2510,299 @@ function resetToDefaults() {
 }
 
 // ==========================================
+// Auto-Pilot Bulk Campaign Runner
+// ==========================================
+function openAutoPilotModal() {
+  // If no leads are manually selected, select all currently pending leads
+  if (selectedLeadIds.size === 0) {
+    const pendingLeads = leads.filter(l => l.status === "pending");
+    if (pendingLeads.length === 0) {
+      showToast("No pending leads found to target in your pipeline.");
+      return;
+    }
+    pendingLeads.forEach(l => selectedLeadIds.add(l.id));
+    updateBulkUI();
+    renderLeadsList();
+  }
+
+  const isDirect = (settings.dispatchEngine === "cpanel" || settings.dispatchEngine === "googleScript") && settings.dispatchUrl;
+  if (!isDirect) {
+    showToast("Configure your cPanel Bridge or Google Script in Settings first ⚙️");
+    openSettingsModal();
+    return;
+  }
+
+  document.getElementById("modalAutoPilot").style.display = "flex";
+  startAutoPilotExecution();
+}
+
+function closeAutoPilotModal() {
+  if (autoPilotRunning) {
+    if (!confirm("An Auto-Pilot outreach campaign is running. Are you sure you want to stop it?")) {
+      return;
+    }
+    autoPilotRunning = false;
+  }
+  document.getElementById("modalAutoPilot").style.display = "none";
+  selectedLeadIds.clear();
+  updateBulkUI();
+  renderApp();
+}
+
+function pauseAutoPilot() {
+  autoPilotPaused = true;
+  document.getElementById("btnPauseAutoPilot").style.display = "none";
+  document.getElementById("btnResumeAutoPilot").style.display = "inline-flex";
+  document.getElementById("autopilotProgressLabel").textContent = "Campaign Paused ⏸";
+  showToast("Auto-Pilot campaign paused.");
+}
+
+function resumeAutoPilot() {
+  autoPilotPaused = false;
+  document.getElementById("btnResumeAutoPilot").style.display = "none";
+  document.getElementById("btnPauseAutoPilot").style.display = "inline-flex";
+  document.getElementById("autopilotProgressLabel").textContent = "Resuming campaign ▶";
+  showToast("Resuming Auto-Pilot...");
+}
+
+async function generatePitchForLead(lead) {
+  const apiKey = settings.geminiApiKey;
+  if (!apiKey) {
+    const tmpl = TEMPLATES.receipt;
+    return { subject: tmpl.getSubject(lead), body: tmpl.getBody(lead) };
+  }
+
+  const prompt = `You are an elite B2B cold email copywriter. Write a highly personalized, compelling outreach email to ${lead.firstName} at ${lead.firmName} (${lead.location || "USA"}).
+Prospect hook/specialty: "${lead.personalHook}".
+Product: "${settings.businessName}" (${settings.productUrl}).
+Value proposition: "${settings.valueProp}".
+Offer: "${settings.offer}".
+Guidelines:
+- Keep body under 100 words.
+- Specific, conversational, zero corporate fluff.
+- Output MUST strictly follow this exact format:
+SUBJECT: [compelling lowercase subject line]
+BODY: [personalized email body text]`;
+
+  const payload = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 1024,
+      thinkingConfig: { thinkingBudget: 0 }
+    }
+  };
+
+  try {
+    let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok && res.status === 400) {
+      delete payload.generationConfig.thinkingConfig;
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    if (!res.ok) throw new Error("API error");
+
+    const data = await res.json();
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    let text = "";
+    for (const p of parts) {
+      if (p.text && !p.thought) text += p.text;
+    }
+    if (!text && parts[0]?.text) text = parts[0].text;
+
+    const subjectMatch = text.match(/(?:\*{0,2})SUBJECT(?:\*{0,2}):\s*(.*?)(?:\n|$)/i);
+    const bodyMatch = text.match(/(?:\*{0,2})BODY(?:\*{0,2}):?\s*([\s\S]*)/i);
+
+    const subject = subjectMatch && subjectMatch[1]
+      ? subjectMatch[1].trim().replace(/^\*+|\*+$/g, "")
+      : (TEMPLATES.receipt.getSubject(lead));
+
+    let cleanBody = "";
+    if (bodyMatch && bodyMatch[1] && bodyMatch[1].trim()) {
+      cleanBody = bodyMatch[1].trim();
+    } else {
+      cleanBody = text
+        .replace(/(?:\*{0,2})SUBJECT(?:\*{0,2}):\s*.*?(?:\n+|$)/i, "")
+        .replace(/^(?:\*{0,2})BODY(?:\*{0,2}):?\s*/i, "")
+        .trim();
+    }
+
+    return { subject, body: cleanBody || TEMPLATES.receipt.getBody(lead) };
+  } catch (err) {
+    const tmpl = TEMPLATES.receipt;
+    return { subject: tmpl.getSubject(lead), body: tmpl.getBody(lead) };
+  }
+}
+
+async function startAutoPilotExecution() {
+  const targetLeads = leads.filter(l => selectedLeadIds.has(l.id));
+  const total = targetLeads.length;
+  if (total === 0) {
+    closeAutoPilotModal();
+    return;
+  }
+
+  autoPilotRunning = true;
+  autoPilotPaused = false;
+
+  const queueList = document.getElementById("autopilotQueueList");
+  const counter = document.getElementById("autopilotCounter");
+  const progressBar = document.getElementById("autopilotProgressBar");
+  const label = document.getElementById("autopilotProgressLabel");
+  const firmNameEl = document.getElementById("autopilotCurrentFirm");
+  const firmDetailEl = document.getElementById("autopilotCurrentDetail");
+  const btnPause = document.getElementById("btnPauseAutoPilot");
+  const btnResume = document.getElementById("btnResumeAutoPilot");
+  const btnDone = document.getElementById("btnDoneAutoPilot");
+
+  btnPause.style.display = "inline-flex";
+  btnResume.style.display = "none";
+  btnDone.style.display = "none";
+
+  // Build Queue Items in DOM
+  queueList.innerHTML = "";
+  targetLeads.forEach((lead, idx) => {
+    const item = document.createElement("div");
+    item.className = "queue-item";
+    item.id = `queueItem_${lead.id}`;
+    item.innerHTML = `
+      <div class="queue-firm-info">
+        <div class="queue-firm-name">#${idx + 1} ${escapeHtml(lead.firmName)}</div>
+        <div class="queue-firm-email">${escapeHtml(lead.firstName)} • ${escapeHtml(lead.email)}</div>
+      </div>
+      <div class="queue-status-pill queue-status-waiting" id="queuePill_${lead.id}">Queued</div>
+    `;
+    queueList.appendChild(item);
+  });
+
+  counter.textContent = `0 / ${total}`;
+  progressBar.style.width = "0%";
+  label.textContent = "Starting automated campaign...";
+
+  let sentCount = 0;
+  let failedCount = 0;
+
+  for (let i = 0; i < targetLeads.length; i++) {
+    if (!autoPilotRunning) break;
+
+    // Handle pause
+    while (autoPilotPaused && autoPilotRunning) {
+      await new Promise(r => setTimeout(r, 500));
+    }
+    if (!autoPilotRunning) break;
+
+    const lead = targetLeads[i];
+    const itemEl = document.getElementById(`queueItem_${lead.id}`);
+    const pillEl = document.getElementById(`queuePill_${lead.id}`);
+
+    if (itemEl) {
+      itemEl.className = "queue-item active";
+      itemEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    if (pillEl) {
+      pillEl.className = "queue-status-pill queue-status-running";
+      pillEl.textContent = "Crafting Pitch...";
+    }
+
+    firmNameEl.textContent = `${lead.firmName} (${lead.firstName})`;
+    firmDetailEl.textContent = "Personalizing pitch copy with Gemini AI...";
+    label.textContent = `Processing Prospect ${i + 1} of ${total}`;
+
+    // Step 1: Personalized AI Pitch
+    const pitch = await generatePitchForLead(lead);
+
+    // Step 2: Render Branded Visual Mockup
+    firmDetailEl.textContent = "Generating custom branded mockup (.jpg)...";
+    if (pillEl) pillEl.textContent = "Rendering Mockup...";
+
+    const mockupBase64 = generateCanvasMockup(
+      lead.firmName,
+      lead.firstName,
+      lead.location,
+      "beforeAfter",
+      settings.businessName,
+      settings.valueProp
+    );
+
+    let finalBody = pitch.body;
+    if (!finalBody.includes("P.S. I put together a quick visual preview")) {
+      finalBody = finalBody.trim() + `\n\nP.S. I put together a quick visual preview of what ${lead.firmName}'s workflow looks like with ${settings.businessName}—see the attached image!`;
+    }
+
+    // Step 3: Dispatch email directly via bridge
+    firmDetailEl.textContent = `Dispatching directly to ${lead.email}...`;
+    if (pillEl) pillEl.textContent = "Sending Email...";
+
+    const cleanFirm = (lead.firmName || "lead").toLowerCase().replace(/[^a-z0-9]/g, "_");
+    const sendResult = await sendEmailDirectly({
+      to: lead.email,
+      subject: pitch.subject,
+      body: finalBody,
+      attachmentBase64: mockupBase64,
+      attachmentName: `${cleanFirm}_workflow_mockup.jpg`
+    });
+
+    if (sendResult.success) {
+      sentCount++;
+      lead.status = "contacted";
+      lead.followUpCount = (lead.followUpCount || 0) + 1;
+      lead.lastContactedAt = new Date().toISOString();
+      lead.followUpDueAt = new Date(Date.now() + 3 * 86400000).toISOString();
+
+      if (pillEl) {
+        pillEl.className = "queue-status-pill queue-status-done";
+        pillEl.textContent = "Sent ✓";
+      }
+      if (itemEl) {
+        itemEl.className = "queue-item done";
+      }
+    } else {
+      failedCount++;
+      if (pillEl) {
+        pillEl.className = "queue-status-pill queue-status-error";
+        pillEl.textContent = "Failed ⚠️";
+      }
+      if (itemEl) {
+        itemEl.className = "queue-item error";
+      }
+    }
+
+    const completed = i + 1;
+    const pct = Math.round((completed / total) * 100);
+    progressBar.style.width = `${pct}%`;
+    counter.textContent = `${completed} / ${total}`;
+
+    saveData();
+    updateKpiAndCounts();
+
+    // Safe 2.0s delay between emails to protect sender domain reputation and SMTP rate limits
+    if (i < targetLeads.length - 1 && autoPilotRunning) {
+      firmDetailEl.textContent = "Rate limit pause (2.0s inbox cooldown)...";
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  }
+
+  autoPilotRunning = false;
+  btnPause.style.display = "none";
+  btnResume.style.display = "none";
+  btnDone.style.display = "block";
+
+  label.textContent = `Campaign Finished: ${sentCount} Sent, ${failedCount} Failed`;
+  firmNameEl.textContent = "Outreach Completed 🎉";
+  firmDetailEl.textContent = "All processed leads marked as Contacted with +3d follow-up cadence set.";
+  showToast(`Auto-Pilot Complete! Dispatched ${sentCount} emails 🎉`);
+}
+
+// ==========================================
 // Toast Notification
 // ==========================================
 let toastTimer = null;
@@ -2259,6 +2996,34 @@ function setupEventListeners() {
   document.getElementById("settingsValueProp")?.addEventListener("change", saveSettings);
   document.getElementById("settingsOffer")?.addEventListener("change", saveSettings);
   document.getElementById("settingsGeminiKey")?.addEventListener("change", saveSettings);
+
+  // Direct Dispatch Settings listeners
+  const engineSelect = document.getElementById("settingsDispatchEngine");
+  if (engineSelect) {
+    engineSelect.addEventListener("change", () => {
+      saveSettings();
+      updateDispatchGuideUI();
+    });
+  }
+  document.getElementById("settingsDispatchUrl")?.addEventListener("change", saveSettings);
+  document.getElementById("settingsDispatchUrl")?.addEventListener("input", saveSettings);
+  document.getElementById("settingsDispatchFromEmail")?.addEventListener("change", saveSettings);
+  document.getElementById("settingsDispatchFromEmail")?.addEventListener("input", saveSettings);
+  document.getElementById("settingsDispatchFromName")?.addEventListener("change", saveSettings);
+  document.getElementById("settingsDispatchFromName")?.addEventListener("input", saveSettings);
+  document.getElementById("settingsDispatchSecret")?.addEventListener("change", saveSettings);
+  document.getElementById("settingsDispatchSecret")?.addEventListener("input", saveSettings);
+  document.getElementById("btnCopyDispatchScript")?.addEventListener("click", copyDispatchScript);
+  document.getElementById("btnTestDispatch")?.addEventListener("click", testDirectDispatch);
+
+  // Bulk Selection & Auto-Pilot Runner
+  document.getElementById("chkSelectAllLeads")?.addEventListener("change", toggleSelectAllPending);
+  document.getElementById("btnTriggerAutoPilotTop")?.addEventListener("click", openAutoPilotModal);
+  document.getElementById("btnRunBulkAutoPilot")?.addEventListener("click", openAutoPilotModal);
+  document.getElementById("btnCloseAutoPilot")?.addEventListener("click", closeAutoPilotModal);
+  document.getElementById("btnPauseAutoPilot")?.addEventListener("click", pauseAutoPilot);
+  document.getElementById("btnResumeAutoPilot")?.addEventListener("click", resumeAutoPilot);
+  document.getElementById("btnDoneAutoPilot")?.addEventListener("click", closeAutoPilotModal);
 
   document.getElementById("btnExportData").addEventListener("click", exportData);
   document.getElementById("inputImportFile").addEventListener("change", importData);
