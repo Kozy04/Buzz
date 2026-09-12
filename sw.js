@@ -1,9 +1,9 @@
-const CACHE_NAME = "buzz-pwa-v18";
+const CACHE_NAME = "buzz-pwa-v21";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
-  "./style.css",
-  "./app.js",
+  "./style.css?v=21",
+  "./app.js?v=21",
   "./manifest.json",
   "./icon.svg"
 ];
@@ -34,22 +34,30 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch: Stale-while-revalidate or Network-first fallback
+// Fetch: Network-first for fresh updates with cache fallback
 self.addEventListener("fetch", (event) => {
+  // Only handle GET requests
+  if (event.request.method !== "GET") return;
+
+  const url = new URL(event.request.url);
+
+  // Ignore non-http/https schemes (e.g. chrome-extension, moz-extension, data)
+  if (!url.protocol.startsWith("http")) return;
+
+  // Only intercept and cache same-origin local application resources
+  if (url.origin !== self.location.origin) return;
+
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Fetch update in background
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse);
-            });
-          }
-        }).catch(() => {});
-        return cachedResponse;
-      }
-      return fetch(event.request);
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === "basic") {
+          const resClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, resClone).catch(() => {});
+          });
+        }
+        return networkResponse;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
