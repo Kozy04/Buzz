@@ -41,6 +41,13 @@
         </div>
       </div>
       <div class="header-actions">
+        <button id="btnOpenHelp" class="icon-btn btn-help-trigger" title="How-To Guide & Instructions">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </button>
         <button id="btnOpenScout" class="icon-btn btn-scout-trigger" title="AI Lead Scout (Find Leads)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8"></circle>
@@ -401,6 +408,16 @@
       </div>
 
       <div class="modal-body settings-list">
+        <!-- How-To Guide Quick Access Banner -->
+        <div class="settings-help-banner" id="bannerOpenHelpFromSettings">
+          <div class="help-banner-icon">📖</div>
+          <div class="help-banner-content">
+            <strong>How-To Outreach &amp; Setup Guide</strong>
+            <span>Step-by-step setup for cPanel email, Gmail webhook, and Auto-Pilot campaigns.</span>
+          </div>
+          <button type="button" id="btnOpenHelpFromSettings" class="btn-help-banner-action">Open Guide ➔</button>
+        </div>
+
         <!-- Business Profile Preset Switcher -->
         <div class="settings-group">
           <label class="input-label" for="settingsProfileSelect">Active Business / Campaign Profile</label>
@@ -504,6 +521,7 @@
               <div class="dispatch-guide-header">
                 <span id="dispatchGuideTitle" style="font-weight: 600; font-size: 11px; color: var(--text-secondary);">cPanel Quick Setup:</span>
                 <div style="display: flex; gap: 6px;">
+                  <button type="button" id="btnOpenHelpFromDispatch" class="btn-xs-copy" style="color: var(--accent-cyan); font-weight: 700;">📖 How-To Guide</button>
                   <button type="button" id="btnCopyDispatchScript" class="btn-xs-copy">📋 Copy Code</button>
                   <a id="btnDownloadPhpScript" href="./buzz-send.php" download="buzz-send.php" class="btn-xs-copy" style="text-decoration: none; display: inline-flex; align-items: center;">📥 Download File</a>
                 </div>
@@ -669,6 +687,9 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
   <!-- Modal 5: Auto-Pilot Bulk Campaign Runner -->
   <div id="modalAutoPilot" class="modal-overlay" style="display: none;">
     <div class="modal-sheet modal-sheet-autopilot">
@@ -712,6 +733,328 @@
           <button id="btnResumeAutoPilot" class="btn-secondary" style="display: none;">▶ Resume Campaign</button>
           <button id="btnDoneAutoPilot" class="btn-primary" style="width: 100%; display: none;">✓ Done & Back to Pipeline</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 6: In-App How-To & Outreach Guide -->
+  <div id="modalHowTo" class="modal-overlay" style="display: none;">
+    <div class="modal-sheet modal-sheet-guide">
+      <div class="sheet-handle"></div>
+      
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>📖 How-To Outreach Guide</h2>
+          <span class="email-subtext">Step-by-step instructions for email setup, auto-pilot, and lead scouting</span>
+        </div>
+        <button id="btnCloseHowTo" class="close-btn">&times;</button>
+      </div>
+
+      <!-- Horizontal Tab Navigation Bar -->
+      <div class="guide-nav-strip">
+        <button type="button" class="guide-nav-pill active" data-tab="quickstart">⚡ Quick Start</button>
+        <button type="button" class="guide-nav-pill" data-tab="cpanel">✉️ Option 1: cPanel</button>
+        <button type="button" class="guide-nav-pill" data-tab="gmail">📬 Option 2: Gmail</button>
+        <button type="button" class="guide-nav-pill" data-tab="autopilot">🚀 Auto-Pilot</button>
+        <button type="button" class="guide-nav-pill" data-tab="scout">🔍 AI Scout</button>
+        <button type="button" class="guide-nav-pill" data-tab="mockups">🎨 Mockups</button>
+        <button type="button" class="guide-nav-pill" data-tab="whitelabel">🏢 White-Label</button>
+      </div>
+
+      <div class="modal-body guide-body">
+        <!-- PANE 1: Quick Start -->
+        <div id="guidePane_quickstart" class="guide-pane active">
+          <div class="guide-hero-card">
+            <h3>Welcome to Buzz Outreach! ⚡</h3>
+            <p>Buzz turns cold email into warm client conversations by combining live Google Search lead discovery, Gemini 2.5 Flash personalized copywriting, and custom-branded before/after visual mockups.</p>
+          </div>
+
+          <div class="guide-steps-list">
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">1</span>
+                <h4>Set Up Direct Email Dispatch</h4>
+              </div>
+              <p>Configure how Buzz sends your emails. If you have a custom domain email on cPanel (e.g. <code>you@yourdomain.com</code>), use <strong>Option 1 (cPanel Bridge)</strong>. If you want to send from Gmail or a Gmail alias, use <strong>Option 2 (Google Apps Script)</strong>.</p>
+              <button type="button" class="guide-action-link" data-switch-tab="cpanel">See cPanel Setup Instructions ➔</button>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">2</span>
+                <h4>Select or Scout Your Leads</h4>
+              </div>
+              <p>Buzz comes pre-loaded with verified target leads. You can also tap <strong>"🔍 AI Scout"</strong> to find active local businesses in any Country, State, and LGA (City) in real time using Google Search Grounding.</p>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">3</span>
+                <h4>Send 1-by-1 or Run Auto-Pilot</h4>
+              </div>
+              <p>Tap <strong>"Draft &amp; Send"</strong> on any lead to preview personalized copy and generate a branded visual mockup. Or tap <strong>"Select All Pending"</strong> and launch the <strong>"⚡ Auto-Pilot Campaign"</strong> to dispatch personalized emails with attached mockups hands-free in the background!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANE 2: Option 1: cPanel Setup -->
+        <div id="guidePane_cpanel" class="guide-pane">
+          <div class="guide-hero-card">
+            <h3>Option 1: cPanel PHP Bridge (Recommended) ✉️</h3>
+            <p>Directly sends cold emails from your custom domain email address (e.g. <code>you@yourdomain.com</code>) with attached 1280x720 <code>.jpg</code> visual mockups. Works on any cPanel hosting (Namecheap, Hostinger, Bluehost, GoDaddy, VPS, etc.).</p>
+          </div>
+
+          <div class="guide-steps-list">
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">Step 1</span>
+                <h4>Get the <code>buzz-send.php</code> Bridge File</h4>
+              </div>
+              <p>Download the production-ready PHP file to your device, or copy its source code:</p>
+              <div class="guide-btn-row">
+                <a href="./buzz-send.php" download="buzz-send.php" class="btn-primary" style="text-decoration: none; font-size: 11.5px; padding: 7px 14px;">📥 Download buzz-send.php</a>
+                <button type="button" id="btnGuideCopyPhp" class="btn-secondary" style="font-size: 11.5px; padding: 7px 14px;">📋 Copy PHP Code</button>
+              </div>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">Step 2</span>
+                <h4>Upload to cPanel <code>public_html</code></h4>
+              </div>
+              <ol class="guide-ordered-list">
+                <li>Log in to your hosting account and open <strong>cPanel</strong>.</li>
+                <li>Click <strong>File Manager</strong> in the Files section.</li>
+                <li>Double-click to open your <strong><code>public_html</code></strong> folder (this is your website root directory).</li>
+                <li>Click the <strong>Upload</strong> icon at the top toolbar, select <code>buzz-send.php</code>, and wait until the progress bar turns green (100%).</li>
+              </ol>
+              <div class="guide-callout info">
+                💡 <strong>Your Bridge URL is:</strong> <code>https://yourdomain.com/buzz-send.php</code> (replace <em>yourdomain.com</em> with your actual domain name).
+              </div>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">Step 3</span>
+                <h4>Configure &amp; Test inside Buzz</h4>
+              </div>
+              <ol class="guide-ordered-list">
+                <li>Open <strong>Settings (⚙️)</strong> in Buzz.</li>
+                <li>Set Gateway to: <strong>Method 1: cPanel PHP Bridge</strong>.</li>
+                <li>In <strong>Bridge URL</strong>, enter: <code>https://yourdomain.com/buzz-send.php</code>.</li>
+                <li>In <strong>From Email</strong>, enter your custom email: e.g. <code>you@yourdomain.com</code>.</li>
+                <li>In <strong>From Sender Name</strong>, enter your name: e.g. <code>Korede</code>.</li>
+                <li>Tap <strong>"🧪 Test Direct Dispatch"</strong>. You will immediately receive a test email with an attached mockup in your inbox!</li>
+                <li>Tap <strong>"✓ Save Profile &amp; Settings"</strong>.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANE 3: Option 2: Gmail Setup -->
+        <div id="guidePane_gmail" class="guide-pane">
+          <div class="guide-hero-card">
+            <h3>Option 2: Google Apps Script (Gmail / Alias) 📬</h3>
+            <p>Dispatches emails directly through your authenticated Google Account (either your personal <code>@gmail.com</code> or any custom domain alias configured in Gmail settings). 100% free serverless webhook.</p>
+          </div>
+
+          <div class="guide-steps-list">
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">Step 1</span>
+                <h4>Copy Google Apps Script Code</h4>
+              </div>
+              <p>Click below to copy the single-function webhook script to your clipboard:</p>
+              <button type="button" id="btnGuideCopyGoogleScript" class="btn-primary" style="font-size: 11.5px; padding: 7px 14px;">📋 Copy Google Script Code</button>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">Step 2</span>
+                <h4>Create a Project on Google</h4>
+              </div>
+              <ol class="guide-ordered-list">
+                <li>Open <a href="https://script.google.com" target="_blank" rel="noopener" style="color: var(--accent-cyan);">script.google.com</a> in a new browser tab.</li>
+                <li>Click <strong>+ New project</strong> in the top left.</li>
+                <li>Select all placeholder code in the editor (Ctrl+A), delete it, and paste your copied code.</li>
+                <li>Click the <strong>Save</strong> floppy disk icon (or Ctrl+S).</li>
+              </ol>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">Step 3</span>
+                <h4>Deploy as Web App</h4>
+              </div>
+              <ol class="guide-ordered-list">
+                <li>In the top right, click <strong>Deploy ➔ New deployment</strong>.</li>
+                <li>Click the gear icon next to "Select type" and pick <strong>Web app</strong>.</li>
+                <li>Set <strong>Execute as:</strong> <code>Me (your@gmail.com)</code>.</li>
+                <li>Set <strong>Who has access:</strong> <code>Anyone</code>.</li>
+                <li>Click <strong>Deploy</strong>. Google will ask for permission: click <em>Authorize access</em>, select your account, click <em>Advanced</em>, then click <em>Go to Untitled project (unsafe)</em>.</li>
+                <li>Copy the generated <strong>Web app URL</strong> (starts with <code>https://script.google.com/macros/s/.../exec</code>).</li>
+              </ol>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">Step 4</span>
+                <h4>Paste &amp; Save in Buzz</h4>
+              </div>
+              <p>Open Buzz Settings (⚙️), set Gateway Method to <strong>Method 2: Google Apps Script Webhook</strong>, paste your Web app URL, and tap <strong>"🧪 Test Direct Dispatch"</strong>!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANE 4: Auto-Pilot Campaigns -->
+        <div id="guidePane_autopilot" class="guide-pane">
+          <div class="guide-hero-card">
+            <h3>⚡ Auto-Pilot Bulk Outreach Campaign</h3>
+            <p>Run high-converting, personalized cold outreach campaigns across dozens of prospects simultaneously while you relax.</p>
+          </div>
+
+          <div class="guide-steps-list">
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">1</span>
+                <h4>Batch Selecting Leads</h4>
+              </div>
+              <p>In your leads list, check individual prospect cards or tap <strong>"Select All Pending"</strong> in the top toolbar. A glowing floating action bar will instantly pop up at the bottom showing your selected count.</p>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">2</span>
+                <h4>Hands-Free Automated Pipeline</h4>
+              </div>
+              <p>When you click <strong>"⚡ Run Auto-Pilot Campaign"</strong>, Buzz's engine sequentially executes 5 automated actions for every prospect:</p>
+              <ul class="guide-bullet-list">
+                <li><strong>AI Personalization:</strong> Generates unique copy referencing the prospect's real company name, city, and services.</li>
+                <li><strong>Branded Visual Mockup:</strong> Dynamically renders a 1280x720 custom before/after graphic.</li>
+                <li><strong>Direct Send:</strong> Sends the email and attachment in the background via your configured bridge.</li>
+                <li><strong>Pipeline Advance:</strong> Moves lead status to <code>Contacted</code> and schedules follow-up in +3 days.</li>
+                <li><strong>Deliverability Cooldown:</strong> Enforces a 2.0s delay between dispatches to keep your sender score at 100%.</li>
+              </ul>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">3</span>
+                <h4>Live Execution Controls</h4>
+              </div>
+              <p>Watch the real-time progress bar and log items advance from <code>Queued</code> ➔ <code>Sending...</code> ➔ <code>Sent ✓</code>. You can pause or resume at any time.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANE 5: AI Lead Scout -->
+        <div id="guidePane_scout" class="guide-pane">
+          <div class="guide-hero-card">
+            <h3>🔍 AI Lead Scout (Location &amp; Niche Finder)</h3>
+            <p>Find authentic, operating business prospects in any country, state, or LGA/city without paying hundreds of dollars for lead scrapers.</p>
+          </div>
+
+          <div class="guide-steps-list">
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">1</span>
+                <h4>Define Location Boundaries</h4>
+              </div>
+              <p>Tap <strong>"🔍 AI Scout"</strong> and enter:</p>
+              <ul class="guide-bullet-list">
+                <li><strong>Country:</strong> e.g. Nigeria, United States, United Kingdom, Canada, Australia.</li>
+                <li><strong>State / Region:</strong> e.g. Lagos, Texas, Florida, London.</li>
+                <li><strong>City / LGA:</strong> e.g. Ikeja, Lekki, Austin, Miami, Westminster.</li>
+              </ul>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">2</span>
+                <h4>Target Any Industry Niche</h4>
+              </div>
+              <p>Pick from pre-set niches (Bookkeepers &amp; CPAs, Law Firms, Real Estate, Clinics, Contractors) or type any custom niche (e.g. <em>Dental Practices</em>, <em>Roofing Companies</em>, <em>Solar Installers</em>).</p>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">3</span>
+                <h4>Google Search Grounding &amp; 1-Tap Import</h4>
+              </div>
+              <p>Gemini queries the live Google Search index to discover active websites, partner names, and public emails, crafting a custom hook for each. Tap <strong>"✓ Import Discovered Leads"</strong> to instantly populate your pipeline!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANE 6: Visual Pitch Mockups -->
+        <div id="guidePane_mockups" class="guide-pane">
+          <div class="guide-hero-card">
+            <h3>🎨 Visual Pitch Mockup Generator</h3>
+            <p>Why pitch with plain text when you can show clients exactly how you transform their business?</p>
+          </div>
+
+          <div class="guide-steps-list">
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">1</span>
+                <h4>3 Proven Visual Pitch Concepts</h4>
+              </div>
+              <ul class="guide-bullet-list">
+                <li><strong>Before &amp; After Split Screen:</strong> Illustrates the chaos of their current manual bottlenecks on the left vs your clean, automated solution on the right.</li>
+                <li><strong>Client Portal / Executive Dashboard:</strong> Shows live metrics, extraction speed, and automated client filing queues branded with their company name.</li>
+                <li><strong>Video Demo Preview Card:</strong> Creates a dark glassmorphic video player card with a play button customized with their name ("30-Sec Demo for Sarah at Apex").</li>
+              </ul>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">2</span>
+                <h4>Single Send vs Bulk Auto-Pilot</h4>
+              </div>
+              <p>In single send mode (via <strong>Draft &amp; Send</strong>), you can preview the generated mockup, download the high-res <code>.jpg</code>, or tap <strong>"📎 Insert Image Note"</strong> to add a P.S. note pointing to the attachment. In Auto-Pilot mode, mockups are rendered and attached to every email automatically!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANE 7: White-Label & Multi-Business -->
+        <div id="guidePane_whitelabel" class="guide-pane">
+          <div class="guide-hero-card">
+            <h3>🏢 Multi-Business &amp; White-Label Setup</h3>
+            <p>Use Buzz to sell SmartRename AI, run client outreach for your digital agency, or white-label it for clients.</p>
+          </div>
+
+          <div class="guide-steps-list">
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">1</span>
+                <h4>1-Click Business Profile Presets</h4>
+              </div>
+              <p>In <strong>Settings (⚙️)</strong>, select your active campaign profile:</p>
+              <ul class="guide-bullet-list">
+                <li><strong>SmartRename AI (Default):</strong> Document &amp; receipt renaming for bookkeepers/CPAs.</li>
+                <li><strong>Web Design &amp; Digital Agency:</strong> Website redesigns and conversion optimization.</li>
+                <li><strong>SEO &amp; B2B Growth Agency:</strong> Organic rankings and lead generation.</li>
+                <li><strong>Consulting &amp; Professional Services:</strong> Workflow and operational audits.</li>
+                <li><strong>Custom Business:</strong> Enter your own business name, website, value proposition, and offer!</li>
+              </ul>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-header">
+                <span class="guide-step-badge">2</span>
+                <h4>Dynamic Pipeline &amp; AI Copy Adaptations</h4>
+              </div>
+              <p>As soon as you switch presets, the header brand, template formulas, and Gemini AI prompts immediately adapt to your chosen industry and offer!</p>
+            </div>
+          </div>
+        </div>
+
+      </div> <!-- End Modal Body -->
+
+      <!-- Footer Quick Action -->
+      <div class="modal-footer guide-footer">
+        <button type="button" id="btnGuideGoSettings" class="btn-primary" style="flex: 1;">⚙️ Open Settings to Configure</button>
+        <button type="button" id="btnGuideCloseBottom" class="btn-secondary">Close Guide</button>
       </div>
     </div>
   </div>

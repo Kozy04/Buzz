@@ -2803,6 +2803,39 @@ async function startAutoPilotExecution() {
 }
 
 // ==========================================
+// In-App How-To & Outreach Guide
+// ==========================================
+function openHowToModal(initialTab = "quickstart") {
+  const modal = document.getElementById("modalHowTo");
+  if (!modal) return;
+  switchGuideTab(initialTab);
+  modal.style.display = "flex";
+}
+
+function closeHowToModal() {
+  const modal = document.getElementById("modalHowTo");
+  if (modal) modal.style.display = "none";
+}
+
+function switchGuideTab(tabKey) {
+  // Update nav pills
+  document.querySelectorAll(".guide-nav-pill").forEach(pill => {
+    pill.classList.toggle("active", pill.dataset.tab === tabKey);
+  });
+
+  // Switch panes
+  document.querySelectorAll(".guide-pane").forEach(pane => {
+    pane.classList.remove("active");
+  });
+  const targetPane = document.getElementById(`guidePane_${tabKey}`);
+  if (targetPane) {
+    targetPane.classList.add("active");
+    const body = targetPane.closest(".guide-body");
+    if (body) body.scrollTop = 0;
+  }
+}
+
+// ==========================================
 // Toast Notification
 // ==========================================
 let toastTimer = null;
@@ -3024,6 +3057,74 @@ function setupEventListeners() {
   document.getElementById("btnPauseAutoPilot")?.addEventListener("click", pauseAutoPilot);
   document.getElementById("btnResumeAutoPilot")?.addEventListener("click", resumeAutoPilot);
   document.getElementById("btnDoneAutoPilot")?.addEventListener("click", closeAutoPilotModal);
+
+  // In-App How-To Guide Listeners
+  document.getElementById("btnOpenHelp")?.addEventListener("click", () => openHowToModal("quickstart"));
+  document.getElementById("btnCloseHowTo")?.addEventListener("click", closeHowToModal);
+  document.getElementById("btnGuideCloseBottom")?.addEventListener("click", closeHowToModal);
+
+  document.getElementById("btnOpenHelpFromSettings")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeSettingsModal();
+    openHowToModal("cpanel");
+  });
+  document.getElementById("bannerOpenHelpFromSettings")?.addEventListener("click", () => {
+    closeSettingsModal();
+    openHowToModal("quickstart");
+  });
+  document.getElementById("btnOpenHelpFromDispatch")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeSettingsModal();
+    const currentEngine = document.getElementById("settingsDispatchEngine")?.value || "cpanel";
+    openHowToModal(currentEngine === "googleScript" ? "gmail" : "cpanel");
+  });
+
+  document.getElementById("btnGuideGoSettings")?.addEventListener("click", () => {
+    closeHowToModal();
+    openSettingsModal();
+  });
+
+  document.getElementById("btnGuideCopyPhp")?.addEventListener("click", () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(CPANEL_PHP_CODE).then(() => {
+        showToast("cPanel PHP bridge code copied! 📋");
+      }).catch(() => {
+        fallbackCopy(CPANEL_PHP_CODE);
+        showToast("cPanel PHP bridge code copied! 📋");
+      });
+    } else {
+      fallbackCopy(CPANEL_PHP_CODE);
+      showToast("cPanel PHP bridge code copied! 📋");
+    }
+  });
+
+  document.getElementById("btnGuideCopyGoogleScript")?.addEventListener("click", () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(GOOGLE_APPS_SCRIPT_CODE).then(() => {
+        showToast("Google Apps Script code copied! 📋");
+      }).catch(() => {
+        fallbackCopy(GOOGLE_APPS_SCRIPT_CODE);
+        showToast("Google Apps Script code copied! 📋");
+      });
+    } else {
+      fallbackCopy(GOOGLE_APPS_SCRIPT_CODE);
+      showToast("Google Apps Script code copied! 📋");
+    }
+  });
+
+  // Guide nav pills click
+  document.querySelectorAll(".guide-nav-pill").forEach(pill => {
+    pill.addEventListener("click", () => {
+      switchGuideTab(pill.dataset.tab);
+    });
+  });
+
+  // In-guide switch links (e.g. data-switch-tab="cpanel")
+  document.querySelectorAll("[data-switch-tab]").forEach(el => {
+    el.addEventListener("click", () => {
+      switchGuideTab(el.dataset.switchTab);
+    });
+  });
 
   document.getElementById("btnExportData").addEventListener("click", exportData);
   document.getElementById("inputImportFile").addEventListener("change", importData);
