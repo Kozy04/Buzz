@@ -505,11 +505,9 @@ This positioning immediately elevates your practice above 95% of local competito
 Do not attempt to automate your entire practice overnight. Follow this sequenced, 30-day transformation blueprint:
 
 ```mermaid
-flowchart TD
-    W1["Week 1: Document Intake Sanitization<br/>• Centralize client cloud folders<br/>• Deploy Vision AI renaming pipeline<br/>• Introduce client forwarding email"]
-    --> W2["Week 2: Bank Categorization & Prompt Tuning<br/>• Build Semantic Rulebook for Chart of Accounts<br/>• Run 3-client staging pilot (>95% accuracy)<br/>• Establish human-in-the-loop exception audit"]
-    --> W3["Week 3: Closing & Communication Automation<br/>• Deploy Micro-Ask Missing Receipt protocol<br/>• Ingest raw P&L/Balance Sheet into narrative engine<br/>• Deliver first CEO Executive Briefing"]
-    --> W4["Week 4: Retainer Packaging & Relaunch<br/>• Finalize 3-tier value advisory retainers<br/>• Host 15-min Modernization Reviews<br/>• Transition clients to monthly autopay"]
+flowchart LR
+    W1["<b>Week 1: Intake & Storage</b><br/>• Centralize cloud hierarchy<br/>• Vision AI auto-renaming<br/>• Setup forwarding inbox"] --> W2["<b>Week 2: Bank Tuning</b><br/>• Semantic rulebook<br/>• 3-client live pilot<br/>• Human audit protocol"]
+    W2 --> W3["<b>Week 3: Fast Closing</b><br/>• Micro-Ask chaser bot<br/>• CEO Brief generator<br/>• 4-day closing cycle"] --> W4["<b>Week 4: Retainer Scaling</b><br/>• 3-tier advisory menu<br/>• Modernization reviews<br/>• ACH autopay migration"]
 ```
 
 ### Week 1: Document Intake Sanitization & Storage Architecture

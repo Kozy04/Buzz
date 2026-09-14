@@ -60,7 +60,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 55px 50px;
+  padding: 38px 45px 30px 45px;
   box-sizing: border-box;
   color: #FFFFFF;
   position: relative;
@@ -84,11 +84,11 @@ body {
 .cover-badge {
   display: inline-block;
   font-family: 'Inter', sans-serif;
-  font-size: 8.5pt;
+  font-size: 8pt;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -107,34 +107,53 @@ body {
   background: rgba(192, 132, 252, 0.12);
 }
 
-.cover-title-group {
-  margin: auto 0;
-  padding: 20px 0;
+.cover-header-group {
+  margin-top: 8px;
 }
 
 .cover-title {
   font-family: 'Inter', sans-serif;
-  font-size: 30pt;
+  font-size: 25pt;
   font-weight: 800;
   line-height: 1.15;
-  letter-spacing: -0.03em;
-  margin: 0 0 16px 0;
+  letter-spacing: -0.025em;
+  margin: 0 0 6px 0;
   color: #FFFFFF;
 }
 
 .cover-subtitle {
   font-family: 'Inter', sans-serif;
-  font-size: 13pt;
+  font-size: 10pt;
   font-weight: 400;
-  line-height: 1.5;
+  line-height: 1.45;
   color: #94A3B8;
-  max-width: 600px;
+  max-width: 620px;
   margin: 0;
+}
+
+.cover-hero-art {
+  width: 100%;
+  max-width: 440px;
+  height: 380px;
+  margin: 10px auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cover-hero-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .cover-footer {
   border-top: 1px solid rgba(255, 255, 255, 0.15);
-  padding-top: 24px;
+  padding-top: 14px;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -403,6 +422,10 @@ def parse_markdown_manuscript(md_text):
     html_body = re.sub(r'<h2>(Preface:.*?)</h2>', r'<h2 class="chapter-start">\1</h2>', html_body)
     html_body = re.sub(r'<h2>(Appendix [A-Z]:.*?)</h2>', r'<h2 class="chapter-start">\1</h2>', html_body)
 
+    # Strip HR tags directly preceding chapter breaks to prevent blank pages
+    html_body = re.sub(r'<hr\s*/?>\s*(<h2 class="chapter-start">)', r'\1', html_body)
+    html_body = re.sub(r'<hr\s*/?>\s*(<h1>)', r'\1', html_body)
+
     return html_body
 
 def build_book(book_config):
@@ -416,6 +439,7 @@ def build_book(book_config):
     subtitle = book_config["subtitle"]
     author = book_config["author"]
     edition = book_config["edition"]
+    cover_image = book_config.get("cover_image", "cover_artwork.jpg")
 
     with open(md_path, "r", encoding="utf-8") as f:
         raw_md = f.read()
@@ -482,15 +506,19 @@ def build_book(book_config):
       <span class="cover-badge">Complete Operational Field Guide</span>
     </div>
 
-    <div class="cover-title-group">
+    <div class="cover-header-group">
       <h1 class="cover-title">{title}</h1>
       <p class="cover-subtitle">{subtitle}</p>
+    </div>
+
+    <div class="cover-hero-art">
+      <img src="{cover_image}" alt="Cover Artwork" />
     </div>
 
     <div class="cover-footer">
       <div>
         <div class="cover-author">{author}</div>
-        <div style="font-size: 9pt; color: #94A3B8; margin-top: 3px;">Published by Antigravity Publishing Group</div>
+        <div style="font-size: 8.5pt; color: #94A3B8; margin-top: 2px;">Published by Antigravity Publishing Group</div>
       </div>
       <div class="cover-edition">{edition}</div>
     </div>

@@ -67,7 +67,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 55px 50px;
+  padding: 38px 45px 30px 45px;
   box-sizing: border-box;
   color: #FFFFFF;
   position: relative;
@@ -91,11 +91,11 @@ body {
 .cover-badge {
   display: inline-block;
   font-family: 'Inter', sans-serif;
-  font-size: 8.5pt;
+  font-size: 8pt;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -114,34 +114,53 @@ body {
   background: rgba(192, 132, 252, 0.12);
 }
 
-.cover-title-group {
-  margin: auto 0;
-  padding: 20px 0;
+.cover-header-group {
+  margin-top: 8px;
 }
 
 .cover-title {
   font-family: 'Inter', sans-serif;
-  font-size: 30pt;
+  font-size: 25pt;
   font-weight: 800;
   line-height: 1.15;
-  letter-spacing: -0.03em;
-  margin: 0 0 16px 0;
+  letter-spacing: -0.025em;
+  margin: 0 0 6px 0;
   color: #FFFFFF;
 }
 
 .cover-subtitle {
   font-family: 'Inter', sans-serif;
-  font-size: 13pt;
+  font-size: 10pt;
   font-weight: 400;
-  line-height: 1.5;
+  line-height: 1.45;
   color: #94A3B8;
-  max-width: 600px;
+  max-width: 620px;
   margin: 0;
+}
+
+.cover-hero-art {
+  width: 100%;
+  max-width: 440px;
+  height: 380px;
+  margin: 10px auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cover-hero-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .cover-footer {
   border-top: 1px solid rgba(255, 255, 255, 0.15);
-  padding-top: 24px;
+  padding-top: 14px;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -413,15 +432,19 @@ hr {
       <span class="cover-badge">Complete Operational Field Guide</span>
     </div>
 
-    <div class="cover-title-group">
+    <div class="cover-header-group">
       <h1 class="cover-title">The AI-Powered Accountant</h1>
       <p class="cover-subtitle">A Tactical Guide to Automating Client Onboarding, Receipt Reconciliation, Document Workflows, and Monthly Reporting with Modern AI</p>
+    </div>
+
+    <div class="cover-hero-art">
+      <img src="cover_artwork.jpg" alt="Cover Artwork" />
     </div>
 
     <div class="cover-footer">
       <div>
         <div class="cover-author">Antigravity Publishing & Digital Assets Group</div>
-        <div style="font-size: 9pt; color: #94A3B8; margin-top: 3px;">Published by Antigravity Publishing Group</div>
+        <div style="font-size: 8.5pt; color: #94A3B8; margin-top: 2px;">Published by Antigravity Publishing Group</div>
       </div>
       <div class="cover-edition">First Edition (2026) — Complete Master Edition</div>
     </div>
@@ -490,7 +513,6 @@ hr {
 <li>Appendix C: Accounting Automation Software Matrix &amp; Cost Calculator</li>
 <li>About the Author &amp; Exclusive Reader Resources</li>
 </ul>
-<hr />
 <h2 class="chapter-start">Preface: The Crossroads of Modern Accounting</h2>
 <p>In every profession, there arrives a historical moment when the fundamental nature of the work undergoes an irreversible phase transition.</p>
 <p>For draftspeople, it was Computer-Aided Design (CAD) in the 1980s. For print typesetters, it was desktop publishing in the 1990s. For travel agents, it was online booking engines in the early 2000s.</p>
@@ -510,7 +532,6 @@ hr {
 <p>This book is not an academic treatise on neural networks, nor is it a breathless piece of Silicon Valley hype. It is a battle-tested, tactical field manual designed specifically for practicing accountants, CPAs, solo bookkeepers, and fractional CFOs.</p>
 <p>By the time you finish this book and implement the systems within it, you will have reclaimed 15 to 25 hours per week of manual administrative drag, expanded your firm's capacity by 300% without hiring additional staff, and transformed your practice from a commoditized compliance shop into a high-margin strategic advisory firm.</p>
 <p>Let us begin.</p>
-<hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 1: The New Accounting Reality — Beyond the Billable Hour</span></h2>
 <h3>The Death of Manual Data Entry</h3>
 <p>To understand where the accounting industry is heading, we must first confront the economics of manual data entry.</p>
@@ -558,7 +579,6 @@ graph TD
 <li><strong>Tier 3: Cognitive &amp; Advisory AI (Reasoning &amp; Narrative Synthesis)</strong><br />
    This is the frontier that allows solo practitioners to function as multi-million-dollar advisory practices. Cognitive AI takes reconciled numbers and performs variance analysis: <em>"Why did Cost of Goods Sold spike by 14.2% while gross revenue only climbed 3.1%?"</em> It translates mathematical anomalies into plain-English strategic memos that clients eagerly pay $2,500 per month to receive.</li>
 </ol>
-<hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 2: The Modern AI Tech Stack for Accounting Practices</span></h2>
 <h3>Vision AI vs. Legacy OCR: Why Everything Changed in 2024–2026</h3>
 <p>For nearly fifteen years, accounting software relied on <strong>Traditional Optical Character Recognition (OCR)</strong> (e.g., legacy tools like Hubdoc, Dext, or early Receipt Bank). </p>
@@ -642,7 +662,6 @@ flowchart TD
 1. <strong>Commercial API Agreements:</strong> When you access models via their commercial developer APIs (Google Cloud Vertex AI / AI Studio Enterprise, Anthropic Commercial API, OpenAI Enterprise API), the terms of service explicitly state that <strong>your data is never used to train models</strong> and is purged from server memory immediately after inference.<br />
 2. <strong>Local Anonymization Layer:</strong> Before sending an invoice image or receipt text to an API, your pipeline should redact or mask personal identifiers (Social Security Numbers, personal home addresses, and bank account numbers).<br />
 3. <strong>Data Residency Isolation:</strong> Ensure your cloud processing occurs in the same legal jurisdiction as your practice (e.g., US servers for US firms, EU servers for GDPR compliance).</p>
-<hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 3: Streamlining Client Document Intake &amp; Automated Receipt Processing</span></h2>
 <h3>The "Shoebox Epidemic": Eliminating <code>scan_0042.pdf</code> Forever</h3>
 <p>Every accountant knows the dread of opening a client's shared folder at the end of the month and discovering:<br />
@@ -711,7 +730,6 @@ Rules:
 2. <strong>WhatsApp / SMS Receipt Bot:</strong> For on-the-go service clients (plumbers, real estate brokers, creative directors), set up a twilio-connected phone number or WhatsApp business endpoint. The client takes a photo with their phone camera and sends it as a text message. The system responds instantly:<br />
 <em>"✓ $42.50 at Shell Oil recorded for Acme Corp under Auto &amp; Fuel."</em></p>
 <p>By removing 100% of user friction, client compliance jumps from 40% to over 95%.</p>
-<hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 4: Automating Bank Reconciliation &amp; Transaction Matching</span></h2>
 <h3>Cracking Cryptic Bank Descriptors (<code>AMZN MKTP</code>, <code>SQ *</code>, <code>TST*</code>)</h3>
 <p>Bank feeds are filled with obscure, fragmented descriptions that frustrate traditional rule-based software:<br />
@@ -755,7 +773,6 @@ Verify that Total Debits == Total Credits.
 * Transactions with a <strong>Confidence Score &gt; 98%</strong> (e.g., standard recurring charges like Adobe, Slack, GSuite, or rent) are pre-matched and staged in a "Ready to Batch Post" queue. The accountant reviews 50 pre-matched items in 30 seconds and clicks "Approve All".<br />
 * Transactions with a <strong>Confidence Score &lt; 90%</strong> (unrecognized vendors, unusual dollar amounts, potential personal expenses) are flagged in an "Exceptions Queue" for human review.</p>
 <p>This shifts the human's role from a typist to an auditor, reducing review time by 85% while maintaining 100% data integrity.</p>
-<hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 5: Frictionless Month-End Close &amp; Client Communications</span></h2>
 <h3>The Automated Missing-Receipt Chaser That Clients Actually Answer</h3>
 <p>The single largest operational delay in every accounting practice is waiting for clients to provide missing documentation at month-end.</p>
@@ -818,7 +835,6 @@ Generate an Executive Financial Brief for the founder structured as follows:
 
 Tone: Peer-to-peer, razor-sharp, strategic, and encouraging. Avoid passive voice and boilerplate definitions.
 </code></pre>
-<hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 6: Transitioning from Low-Margin Bookkeeper to High-Ticket Fractional CFO</span></h2>
 <h3>Escaping the $45/Hour Trap: The Fixed-Fee Advisory Model</h3>
 <p>Hourly billing is a trap. If you charge $50 per hour and use automation to complete a client's monthly books in 2 hours instead of 8 hours, you have just penalized yourself by reducing your fee from $400 to $100!</p>
@@ -837,15 +853,12 @@ graph TD
 * <em>"Traditional bookkeepers give you historical reports on the 25th of the month about what you spent 30 days ago. That's like driving a car by looking in the rearview mirror."</em><br />
 * <em>"Our firm installs a real-time AI ingestion pipeline. You snap photos of receipts on your phone, your books are reconciled weekly, and you receive an executive video brief on the 2nd business day of every month showing your cash trajectory."</em></p>
 <p>This positioning immediately elevates your practice above 95% of local competitors, allowing you to charge 2x to 3x prevailing market rates while spending half the time on fulfillment.</p>
-<hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 7: The 30-Day Firm Transformation Implementation Roadmap</span></h2>
 <p>Do not attempt to automate your entire practice overnight. Follow this sequenced, 30-day transformation blueprint:</p>
 <div class="mermaid-diagram-card"><div class="mermaid">
-flowchart TD
-    W1["Week 1: Document Intake Sanitization<br/>• Centralize client cloud folders<br/>• Deploy Vision AI renaming pipeline<br/>• Introduce client forwarding email"]
-    --> W2["Week 2: Bank Categorization & Prompt Tuning<br/>• Build Semantic Rulebook for Chart of Accounts<br/>• Run 3-client staging pilot (>95% accuracy)<br/>• Establish human-in-the-loop exception audit"]
-    --> W3["Week 3: Closing & Communication Automation<br/>• Deploy Micro-Ask Missing Receipt protocol<br/>• Ingest raw P&L/Balance Sheet into narrative engine<br/>• Deliver first CEO Executive Briefing"]
-    --> W4["Week 4: Retainer Packaging & Relaunch<br/>• Finalize 3-tier value advisory retainers<br/>• Host 15-min Modernization Reviews<br/>• Transition clients to monthly autopay"]
+flowchart LR
+    W1["<b>Week 1: Intake & Storage</b><br/>• Centralize cloud hierarchy<br/>• Vision AI auto-renaming<br/>• Setup forwarding inbox"] --> W2["<b>Week 2: Bank Tuning</b><br/>• Semantic rulebook<br/>• 3-client live pilot<br/>• Human audit protocol"]
+    W2 --> W3["<b>Week 3: Fast Closing</b><br/>• Micro-Ask chaser bot<br/>• CEO Brief generator<br/>• 4-day closing cycle"] --> W4["<b>Week 4: Retainer Scaling</b><br/>• 3-tier advisory menu<br/>• Modernization reviews<br/>• ACH autopay migration"]
 </div></div>
 <h3>Week 1: Document Intake Sanitization &amp; Storage Architecture</h3>
 <ul>

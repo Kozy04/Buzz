@@ -67,7 +67,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 55px 50px;
+  padding: 38px 45px 30px 45px;
   box-sizing: border-box;
   color: #FFFFFF;
   position: relative;
@@ -91,11 +91,11 @@ body {
 .cover-badge {
   display: inline-block;
   font-family: 'Inter', sans-serif;
-  font-size: 8.5pt;
+  font-size: 8pt;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -114,34 +114,53 @@ body {
   background: rgba(192, 132, 252, 0.12);
 }
 
-.cover-title-group {
-  margin: auto 0;
-  padding: 20px 0;
+.cover-header-group {
+  margin-top: 8px;
 }
 
 .cover-title {
   font-family: 'Inter', sans-serif;
-  font-size: 30pt;
+  font-size: 25pt;
   font-weight: 800;
   line-height: 1.15;
-  letter-spacing: -0.03em;
-  margin: 0 0 16px 0;
+  letter-spacing: -0.025em;
+  margin: 0 0 6px 0;
   color: #FFFFFF;
 }
 
 .cover-subtitle {
   font-family: 'Inter', sans-serif;
-  font-size: 13pt;
+  font-size: 10pt;
   font-weight: 400;
-  line-height: 1.5;
+  line-height: 1.45;
   color: #94A3B8;
-  max-width: 600px;
+  max-width: 620px;
   margin: 0;
+}
+
+.cover-hero-art {
+  width: 100%;
+  max-width: 440px;
+  height: 380px;
+  margin: 10px auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cover-hero-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .cover-footer {
   border-top: 1px solid rgba(255, 255, 255, 0.15);
-  padding-top: 24px;
+  padding-top: 14px;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -413,15 +432,19 @@ hr {
       <span class="cover-badge">Complete Operational Field Guide</span>
     </div>
 
-    <div class="cover-title-group">
+    <div class="cover-header-group">
       <h1 class="cover-title">The 7-Figure AI Automation Agency Blueprint</h1>
       <p class="cover-subtitle">How to Build, Price, and Sell High-Ticket n8n, Make, and LLM Workflows to Real Businesses</p>
+    </div>
+
+    <div class="cover-hero-art">
+      <img src="cover_artwork.jpg" alt="Cover Artwork" />
     </div>
 
     <div class="cover-footer">
       <div>
         <div class="cover-author">Antigravity Publishing & Digital Assets Group</div>
-        <div style="font-size: 9pt; color: #94A3B8; margin-top: 3px;">Published by Antigravity Publishing Group</div>
+        <div style="font-size: 8.5pt; color: #94A3B8; margin-top: 2px;">Published by Antigravity Publishing Group</div>
       </div>
       <div class="cover-edition">First Edition (2026) — Complete Master Edition</div>
     </div>
@@ -489,7 +512,6 @@ hr {
 <li>Appendix C: Cold Outreach Pitch Swipe File for 5 High-Paying Niches</li>
 <li>About the Author &amp; Digital Resource Access</li>
 </ul>
-<hr />
 <h2 class="chapter-start">Preface: The Great Agency Unbundling of 2026</h2>
 <p>In corporate boardrooms, executive suites, and small business back offices around the world, a silent revolution is taking place.</p>
 <p>For the past twenty years, when a business wanted to scale its operations, improve lead response times, or eliminate administrative delays, it had only two choices:<br />
@@ -506,7 +528,6 @@ hr {
 * <em>"We automate client document intake and contract generation, shortening your onboarding cycle from 5 days to 15 minutes."</em></p>
 <p>If you know how to connect APIs, orchestrate logic in tools like n8n or Make, and harness modern multimodal LLMs, you hold the keys to the most lucrative B2B service opportunity of our generation.</p>
 <p>This book is your end-to-end blueprint for building that agency from scratch.</p>
-<hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 1: The AAA Business Model Anatomy</span></h2>
 <h3>Why 95% of "AI Agencies" Collapse Within 60 Days</h3>
 <p>Between 2023 and 2026, over 100,000 freelance developers and creators launched an "AI Automation Agency." </p>
@@ -572,7 +593,6 @@ $$\mathbf{Implementation\ Sprint\ (\$5,000\ Setup)\ +\ Ongoing\ Automation\ SLA\
 * Up to 15 hours of continuous workflow optimization, schema tweaks, and feature expansion.<br />
 * Monthly executive operational audit showing hours saved and pipeline velocity.</p>
 <p>With just <strong>10 clients paying $3,500 per month</strong>, your agency generates <strong>$35,000 per month ($420,000/year)</strong> in high-margin recurring revenue with virtually zero physical overhead.</p>
-<hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 2: The Modern AAA Production Stack</span></h2>
 <h3>The Orchestration Backbone: n8n Enterprise vs. Make vs. Custom Code</h3>
 <p>Your choice of workflow orchestrator is the structural foundation of your agency.</p>
@@ -633,7 +653,6 @@ graph TD
 </tr>
 </tbody>
 </table>
-<hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 3: The 4 High-Ticket Workflows Businesses Actually Pay $5k+ For</span></h2>
 <h3>Workflow 1: Instant Inbound Lead Enrichment &amp; Speed-to-Lead Booking Engine</h3>
 <h4>The Problem:</h4>
@@ -701,7 +720,6 @@ sequenceDiagram
 3. Dynamically renders a bespoke, branded <strong>Before &amp; After Visual Pitch Mockup</strong> (via Vector SVG or AI vision) tailored to the prospect's real company name.<br />
 4. Dispatches the email directly through a secure cPanel or Google Apps Script bridge with automated follow-up cadences and deliverability protection.</p>
 <p><strong>Client Value:</strong> Generates qualified B2B sales pipeline on demand. You charge <strong>$5,000 setup + $2,500/month retainer + performance bonus per booked qualified meeting</strong>.</p>
-<hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 4: Packaging and Pricing Your Agency Offers</span></h2>
 <h3>Escaping the Hourly Trap: Value-Based Retainer Mathematics</h3>
 <p>Never quote an hourly rate to a business client. </p>
@@ -723,7 +741,6 @@ graph TD
 
     Tier1 --> Tier2 --> Tier3
 </div></div>
-<hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 5: Predictable Client Acquisition (Landing Your First 3–5 Retainers)</span></h2>
 <h3>The 5 Goldmine B2B Niches</h3>
 <p>Do not target tech startups or Silicon Valley founders; they have in-house engineers who will try to build automations themselves. Target <strong>Traditional, High-Ticket, Cash-Rich Service Businesses</strong>:</p>
@@ -744,7 +761,6 @@ graph TD
    * <strong>Minute 3 (The Proof):</strong> Show a live visual diagram or mockup of the automated speed-to-lead pipeline: <em>"We built an automated system that connects form fills to instant two-way SMS dispatch in 30 seconds. Here is how it works on your exact intake form..."</em><br />
    * <strong>The Low-Pressure CTA:</strong> <em>"I'm not asking you to buy anything. If you'd like me to send over the workflow diagram so your team can look at it, just reply 'Send it over' and I'll send the link."</em></p>
 <p>This approach achieves a <strong>35% to 50% positive response rate</strong> because it delivers immediate, unarguable diagnostic value before asking for anything.</p>
-<hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 6: Production Hardening, Maintenance &amp; SLA Reliability</span></h2>
 <h3>Engineering Resilient Pipelines: Why Amateurs Get Fired</h3>
 <p>The difference between a freelancer who gets fired and an agency that commands $5,000/month retainers is <strong>Production Hardening</strong>.</p>
@@ -759,7 +775,6 @@ graph TD
 <li><strong>Dead-Letter Queues (DLQ):</strong> If a transaction repeatedly fails due to invalid data (e.g., an email address missing an <code>@</code> symbol), route the message to a persistent Dead-Letter Queue (in Postgres or Redis) so no client data is ever lost.</li>
 <li><strong>Idempotency Safeguards:</strong> Ensure that if a workflow is accidentally re-triggered with the same payload, it does not charge a client twice or send duplicate emails. Use unique transaction hashes (<code>md5(clientId + invoiceId + date)</code>) as database deduplication keys.</li>
 </ol>
-<hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 7: Scaling from Solo Builder to $20k–$50k/Month</span></h2>
 <h3>The "Build Once, Sell Ten Times" Verticalization Strategy</h3>
 <p>The fastest way to scale an agency without working 80 hours a week is <strong>Niche Verticalization</strong>.</p>

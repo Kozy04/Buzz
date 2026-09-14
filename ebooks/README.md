@@ -9,13 +9,20 @@
 ```
 ebooks/
 ├── README.md                                          # Master publishing & launch guide
+├── compile_ebooks.py                                  # Automated HTML/PDF compiler engine
 │
 ├── the_ai_powered_accountant/                         # [BOOK 1: B2B PROFESSIONAL MANUAL]
+│   ├── The_AI_Powered_Accountant.pdf                  # Publication-ready compiled PDF (27 pages)
+│   ├── The_AI_Powered_Accountant.html                 # Interactive HTML eBook edition
+│   ├── cover_artwork.jpg                              # High-res text-free thematic cover art
 │   ├── the_ai_powered_accountant_manuscript.md        # Full 7-chapter publication manuscript
 │   ├── kdp_metadata.md                                # KDP title, 7 keywords, categories & HTML blurb
 │   └── gumroad_sales_copy.md                          # Direct sales page copy & pricing tiers
 │
 └── ai_automation_agency_blueprint/                    # [BOOK 2: TECH ENTREPRENEUR PLAYBOOK]
+    ├── The_AI_Automation_Agency_Blueprint.pdf         # Publication-ready compiled PDF (19 pages)
+    ├── The_AI_Automation_Agency_Blueprint.html        # Interactive HTML eBook edition
+    ├── cover_artwork.jpg                              # High-res text-free thematic cover art
     ├── ai_automation_agency_blueprint_manuscript.md   # Full 7-chapter publication manuscript
     ├── kdp_metadata.md                                # KDP title, 7 keywords, categories & HTML blurb
     └── gumroad_sales_copy.md                          # Direct sales page copy & pricing tiers
