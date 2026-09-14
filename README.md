@@ -27,11 +27,16 @@ Buzz/
 │       ├── template_architecture_guide.md # Framer assembly & breakpoint construction specs
 │       └── marketplace_submission_guide.md# Framer Marketplace review & monetization checklist
 │
-└── [3. CLI COLD OUTREACH SCRIPT]       # ➔ See cli_outreach_tool/README.md
-    └── cli_outreach_tool/
-        ├── send_outreach.js            # Node.js automated SMTP dispatcher with human delays
-        ├── leads.json                  # Target prospect database
-        └── drafts/                     # 10 pre-rendered, personalized prospect email drafts
+├── [3. CLI COLD OUTREACH SCRIPT]       # ➔ See cli_outreach_tool/README.md
+│   └── cli_outreach_tool/
+│       ├── send_outreach.js            # Node.js automated SMTP dispatcher with human delays
+│       ├── leads.json                  # Target prospect database
+│       └── drafts/                     # 10 pre-rendered, personalized prospect email drafts
+│
+└── [4. COMMERCIAL EBOOKS CATALOG]      # ➔ See ebooks/README.md
+    └── ebooks/
+        ├── the_ai_powered_accountant/  # Book 1: Manuscript, KDP metadata, Gumroad copy
+        └── ai_automation_agency_blueprint/ # Book 2: Manuscript, KDP metadata, Gumroad copy
 ```
 
 ---
@@ -79,3 +84,15 @@ A lightweight, standalone command-line script for sending personalized emails vi
 * **Safe SMTP Sending:** Humanized 60–90 second delays between sends (`node send_outreach.js --send`).
 
 👉 **[Open CLI Outreach Tool Documentation](./cli_outreach_tool/README.md)**
+
+---
+
+## 📚 4. Commercial eBooks & Digital Publishing Catalog
+
+A dual-catalog publishing package optimized for **Amazon Kindle Direct Publishing (KDP)** organic search traffic and direct sales (**Gumroad / Lemon Squeezy**):
+* **Book 1: The AI-Powered Accountant** (Practitioner manual: automating receipt OCR, bank feeds, and Fractional CFO advisory retainers).
+* **Book 2: The 7-Figure AI Automation Agency Blueprint** (Agency builder playbook: packaging and selling high-ticket n8n & LLM workflows).
+* Complete with full manuscripts, Amazon KDP 7 backend keywords, categories, HTML blurbs, and Gumroad sales page copy.
+
+👉 **[Open eBooks Catalog & Publishing Guide](./ebooks/README.md)**
+
