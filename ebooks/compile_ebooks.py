@@ -65,6 +65,7 @@ body {
   align-items: center;
   padding: 55px 48px 45px 48px;
   box-sizing: border-box;
+  background-color: #030A1A;
   color: #FFFFFF;
   position: relative;
   overflow: hidden;
@@ -83,7 +84,7 @@ body {
   z-index: 1;
 }
 
-/* Neutral deep obsidian cinematic scrim - ZERO pink or purple tints */
+/* Deep midnight navy blue cinematic scrim - 100% blue tones, ZERO pink or magenta */
 .cover-overlay {
   position: absolute;
   top: 0;
@@ -94,11 +95,11 @@ body {
   pointer-events: none;
   background: linear-gradient(
     180deg,
-    rgba(4, 7, 14, 0.70) 0%,
-    rgba(4, 7, 14, 0.40) 25%,
-    rgba(4, 7, 14, 0.72) 50%,
-    rgba(4, 7, 14, 0.50) 75%,
-    rgba(2, 4, 10, 0.94) 100%
+    rgba(2, 9, 24, 0.72) 0%,
+    rgba(2, 9, 24, 0.35) 25%,
+    rgba(2, 9, 24, 0.68) 50%,
+    rgba(2, 9, 24, 0.45) 75%,
+    rgba(1, 6, 18, 0.94) 100%
   );
 }
 
@@ -460,7 +461,7 @@ def build_book(book_config):
     subtitle = book_config["subtitle"]
     author = book_config["author"]
     edition = book_config["edition"]
-    cover_image = book_config.get("cover_image", "cover_artwork.jpg")
+    cover_image = book_config.get("cover_image", "cover_artwork.png")
 
     with open(md_path, "r", encoding="utf-8") as f:
         raw_md = f.read()
@@ -585,6 +586,7 @@ if __name__ == "__main__":
             "out_html": os.path.join(BASE_DIR, "the_ai_powered_accountant", "The_AI_Powered_Accountant.html"),
             "out_pdf": os.path.join(BASE_DIR, "the_ai_powered_accountant", "The_AI_Powered_Accountant.pdf"),
             "cover_class": "cover-accountant",
+            "cover_image": "cover_artwork.png",
             "badge_class": "gold",
             "badge_text": "2026 Practical Implementation Series",
             "title": "The AI-Powered Accountant",
@@ -597,6 +599,7 @@ if __name__ == "__main__":
             "out_html": os.path.join(BASE_DIR, "ai_automation_agency_blueprint", "The_AI_Automation_Agency_Blueprint.html"),
             "out_pdf": os.path.join(BASE_DIR, "ai_automation_agency_blueprint", "The_AI_Automation_Agency_Blueprint.pdf"),
             "cover_class": "cover-agency",
+            "cover_image": "cover_artwork.png",
             "badge_class": "purple",
             "badge_text": "2026 Agency Scaling Series",
             "title": "The 7-Figure AI Automation Agency Blueprint",
