@@ -56,126 +56,147 @@ body {
 }
 
 /* ==========================================================================
-   COVER PAGE STYLING
+   COVER PAGE STYLING (FULL BLEED HERO BACKGROUND - CENTERED TITLE)
    ========================================================================== */
 .cover-page {
-  width: 100%;
-  height: 10.5in;
-  max-height: 10.5in;
+  width: 8.5in;
+  height: 11in;
+  min-height: 11in;
+  max-height: 11in;
   page-break-after: always;
+  break-after: page;
   page-break-inside: avoid;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 38px 45px 30px 45px;
+  align-items: center;
+  padding: 55px 48px 45px 48px;
   box-sizing: border-box;
   color: #FFFFFF;
   position: relative;
   overflow: hidden;
+  margin: 0;
+  text-align: center;
 }
 
-.cover-accountant {
-  background: linear-gradient(145deg, #0A192F 0%, #0F2D4A 50%, #061120 100%);
+.cover-bg-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  z-index: 1;
 }
 
-.cover-agency {
-  background: linear-gradient(145deg, #08080A 0%, #130D24 50%, #090614 100%);
+/* Neutral deep obsidian cinematic scrim - ZERO pink or purple tints */
+.cover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(4, 7, 14, 0.70) 0%,
+    rgba(4, 7, 14, 0.40) 25%,
+    rgba(4, 7, 14, 0.72) 50%,
+    rgba(4, 7, 14, 0.50) 75%,
+    rgba(2, 4, 10, 0.94) 100%
+  );
 }
 
-.cover-badge-row {
+.cover-top-spacer {
+  height: 40px;
+  visibility: hidden;
+  position: relative;
+  z-index: 3;
+}
+
+/* Middle Center Title & Subtitle */
+.cover-center-block {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  max-width: 660px;
+  margin: 0 auto;
+  text-align: center;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-}
-
-.cover-badge {
-  display: inline-block;
-  font-family: 'Inter', sans-serif;
-  font-size: 8pt;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  padding: 5px 12px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #38BDF8;
-}
-
-.cover-badge.gold {
-  color: #FBBF24;
-  border-color: rgba(251, 191, 36, 0.35);
-  background: rgba(251, 191, 36, 0.12);
-}
-
-.cover-badge.purple {
-  color: #C084FC;
-  border-color: rgba(192, 132, 252, 0.35);
-  background: rgba(192, 132, 252, 0.12);
-}
-
-.cover-header-group {
-  margin-top: 8px;
+  justify-content: center;
 }
 
 .cover-title {
   font-family: 'Inter', sans-serif;
-  font-size: 25pt;
-  font-weight: 800;
+  font-size: 33pt;
+  font-weight: 900;
   line-height: 1.15;
-  letter-spacing: -0.025em;
-  margin: 0 0 6px 0;
+  letter-spacing: -0.03em;
+  margin: 0 0 16px 0;
   color: #FFFFFF;
+  text-align: center;
+  text-shadow: 
+    0 2px 5px rgba(0, 0, 0, 0.95),
+    0 6px 22px rgba(0, 0, 0, 0.95),
+    0 16px 45px rgba(0, 0, 0, 0.95);
+}
+
+.cover-title-divider {
+  width: 80px;
+  height: 3px;
+  background: #38BDF8;
+  border-radius: 2px;
+  margin: 0 auto 18px auto;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.6);
+}
+
+.cover-agency .cover-title-divider {
+  background: #00E5FF;
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.6);
 }
 
 .cover-subtitle {
   font-family: 'Inter', sans-serif;
-  font-size: 10pt;
+  font-size: 11.5pt;
   font-weight: 400;
-  line-height: 1.45;
-  color: #94A3B8;
-  max-width: 620px;
-  margin: 0;
+  line-height: 1.55;
+  color: #E2E8F0;
+  max-width: 580px;
+  margin: 0 auto;
+  text-align: center;
+  text-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.95),
+    0 4px 18px rgba(0, 0, 0, 0.95);
 }
 
-.cover-hero-art {
-  width: 100%;
-  max-width: 440px;
-  height: 380px;
-  margin: 10px auto;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.cover-hero-art img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
+/* Center Bottom Footer */
 .cover-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-  padding-top: 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  font-family: 'Inter', sans-serif;
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  max-width: 580px;
+  margin: 0 auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  padding-top: 18px;
+  text-align: center;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
 }
 
 .cover-author {
-  font-size: 11pt;
+  font-size: 12pt;
   font-weight: 700;
-  color: #F8FAFC;
+  color: #FFFFFF;
+  letter-spacing: 0.02em;
 }
 
-.cover-edition {
+.cover-imprint {
   font-size: 8.5pt;
-  color: #64748B;
+  color: #94A3B8;
+  margin-top: 4px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -425,28 +446,25 @@ hr {
 </head>
 <body>
 
-  <!-- COVER PAGE -->
+  <!-- COVER PAGE (FULL BLEED HERO BACKGROUND - CENTERED TITLE) -->
   <div class="cover-page cover-agency">
-    <div class="cover-badge-row">
-      <span class="cover-badge purple">2026 Agency Scaling Series</span>
-      <span class="cover-badge">Complete Operational Field Guide</span>
-    </div>
+    <img class="cover-bg-image" src="cover_artwork.jpg" alt="Cover Background" />
+    <div class="cover-overlay"></div>
 
-    <div class="cover-header-group">
+    <!-- Top Spacer for Vertical Balance -->
+    <div class="cover-top-spacer"></div>
+
+    <!-- MIDDLE CENTER TITLE BLOCK -->
+    <div class="cover-center-block">
       <h1 class="cover-title">The 7-Figure AI Automation Agency Blueprint</h1>
+      <div class="cover-title-divider"></div>
       <p class="cover-subtitle">How to Build, Price, and Sell High-Ticket n8n, Make, and LLM Workflows to Real Businesses</p>
     </div>
 
-    <div class="cover-hero-art">
-      <img src="cover_artwork.jpg" alt="Cover Artwork" />
-    </div>
-
+    <!-- BOTTOM FOOTER -->
     <div class="cover-footer">
-      <div>
-        <div class="cover-author">Antigravity Publishing & Digital Assets Group</div>
-        <div style="font-size: 8.5pt; color: #94A3B8; margin-top: 2px;">Published by Antigravity Publishing Group</div>
-      </div>
-      <div class="cover-edition">First Edition (2026) — Complete Master Edition</div>
+      <div class="cover-author">Antigravity Publishing & Digital Assets Group</div>
+      <div class="cover-imprint">Published by Antigravity Publishing Group &bull; First Edition (2026) — Complete Master Edition</div>
     </div>
   </div>
 
