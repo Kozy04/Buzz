@@ -305,9 +305,9 @@ When framed against $480,000 in lost revenue, a $36,000 investment is an immedia
 
 ```mermaid
 graph TD
-    Tier1["<b>Tier 1: Operational Monitoring SLA ($1,500/mo)</b><br/>• 24/7 Webhook & API monitoring<br/>• Up to 5 hours of minor workflow adjustments<br/>• Incident response within 4 business hours"]
-    Tier2["<b>Tier 2: Growth Automation Partner ($3,500/mo - MOST POPULAR)</b><br/>• Everything in Tier 1<br/>• 1 New custom workflow build per month<br/>• Continuous prompt tuning & latency optimization<br/>• Monthly executive operational review"]
-    Tier3["<b>Tier 3: Dedicated Enterprise Transformation ($7,500/mo)</b><br/>• Everything in Tier 2<br/>• Unlimited workflow builds & maintenance<br/>• Priority 1-hour SLA response<br/>• Weekly strategy call with executive team"]
+    Tier1["Tier 1: Operational Monitoring SLA ($1,500/mo)<br/>• 24/7 Webhook & API monitoring<br/>• Up to 5 hours of minor workflow adjustments<br/>• Incident response within 4 business hours"]
+    Tier2["Tier 2: Growth Automation Partner ($3,500/mo - MOST POPULAR)<br/>• Everything in Tier 1<br/>• 1 New custom workflow build per month<br/>• Continuous prompt tuning & latency optimization<br/>• Monthly executive operational review"]
+    Tier3["Tier 3: Dedicated Enterprise Transformation ($7,500/mo)<br/>• Everything in Tier 2<br/>• Unlimited workflow builds & maintenance<br/>• Priority 1-hour SLA response<br/>• Weekly strategy call with executive team"]
 
     Tier1 --> Tier2 --> Tier3
 ```

@@ -3,6 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <title>The 7-Figure AI Automation Agency Blueprint</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: 'neutral',
+        themeVariables: {
+          primaryColor: '#F0F9FF',
+          primaryTextColor: '#0F172A',
+          primaryBorderColor: '#0284C7',
+          lineColor: '#0284C7',
+          secondaryColor: '#F8FAFC',
+          tertiaryColor: '#FFFFFF'
+        },
+        fontFamily: 'Inter, sans-serif'
+      });
+    });
+  </script>
   <style>
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap');
@@ -360,6 +378,30 @@ hr {
   page-break-inside: avoid;
 }
 
+
+.mermaid-diagram-card {
+  margin: 22px auto;
+  padding: 16px 20px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  text-align: center;
+  page-break-inside: avoid;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mermaid-diagram-card svg {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+.mermaid {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
   </style>
 </head>
 <body>
@@ -470,15 +512,16 @@ hr {
 <p>Between 2023 and 2026, over 100,000 freelance developers and creators launched an "AI Automation Agency." </p>
 <p>Within 60 days of launching, approximately 95% had quit, having earned zero dollars.</p>
 <p>Why did they fail?</p>
-<pre><code class="language-mermaid">flowchart LR
-    A[&quot;Beginner Agency Trap:&lt;br/&gt;Selling 'AI Chatbots' &amp; 'Prompts'&quot;] --&gt; B[&quot;Targets Low-Budget Clients&lt;br/&gt;(Restaurants, Gyms, E-com)&quot;]
-    B --&gt; C[&quot;Client sees no ROI&lt;br/&gt;(Chatbot hallucinates or annoys users)&quot;]
-    C --&gt; D[&quot;$500 One-Off Gigs &amp; Catastrophic Churn&quot;]
+<div class="mermaid-diagram-card"><div class="mermaid">
+flowchart LR
+    A["Beginner Agency Trap:<br/>Selling 'AI Chatbots' & 'Prompts'"] --> B["Targets Low-Budget Clients<br/>(Restaurants, Gyms, E-com)"]
+    B --> C["Client sees no ROI<br/>(Chatbot hallucinates or annoys users)"]
+    C --> D["$500 One-Off Gigs & Catastrophic Churn"]
 
-    E[&quot;Modern AAA Model:&lt;br/&gt;Selling Core Operational Infrastructure&quot;] --&gt; F[&quot;Targets High-Cash B2B Niches&lt;br/&gt;(Legal, Med, Logistics, Finance)&quot;]
-    F --&gt; G[&quot;Cuts 40+ hrs/mo of Employee Labor&lt;br/&gt;(Immediate Hard ROI)&quot;]
-    G --&gt; H[&quot;$3,500/mo Recurring Retainer Contracts&quot;]
-</code></pre>
+    E["Modern AAA Model:<br/>Selling Core Operational Infrastructure"] --> F["Targets High-Cash B2B Niches<br/>(Legal, Med, Logistics, Finance)"]
+    F --> G["Cuts 40+ hrs/mo of Employee Labor<br/>(Immediate Hard ROI)"]
+    G --> H["$3,500/mo Recurring Retainer Contracts"]
+</div></div>
 <p>The fatal mistakes of beginner agencies follow an identical pattern:<br />
 1. <strong>The "Shiny Toy" Fallacy:</strong> They build customer service chatbots using generic website scrapers. When the bot gives an inaccurate answer to a client's customer or fails to capture a lead, the client gets angry and cancels.<br />
 2. <strong>Targeting Broke Niches:</strong> They reach out to local coffee shops, barbershops, and drop-shipping stores. These businesses operate on razor-thin margins, have zero tech literacy, and fight over a $300 setup fee.<br />
@@ -533,13 +576,14 @@ $$\mathbf{Implementation\ Sprint\ (\$5,000\ Setup)\ +\ Ongoing\ Automation\ SLA\
 <h2 class="chapter-start"><span class="chapter-number">Chapter 2: The Modern AAA Production Stack</span></h2>
 <h3>The Orchestration Backbone: n8n Enterprise vs. Make vs. Custom Code</h3>
 <p>Your choice of workflow orchestrator is the structural foundation of your agency.</p>
-<pre><code class="language-mermaid">graph TD
-    Trigger[&quot;Event Trigger&lt;br/&gt;(Webhook / Form / Email / CRON)&quot;] 
-    --&gt; Orchestrator[&quot;n8n Orchestration Core&lt;br/&gt;(Error-Handling, Branching, State Management)&quot;]
-    Orchestrator --&gt; LLM[&quot;Multimodal AI Tier&lt;br/&gt;(Gemini 2.5 Flash / Claude 3.5 Sonnet)&quot;]
-    Orchestrator --&gt; DB[&quot;Vector / Relational Storage&lt;br/&gt;(Supabase Postgres + pgvector)&quot;]
-    Orchestrator --&gt; Action[&quot;Downstream Action Node&lt;br/&gt;(CRM Push / WhatsApp API / ERP Update)&quot;]
-</code></pre>
+<div class="mermaid-diagram-card"><div class="mermaid">
+graph TD
+    Trigger["Event Trigger<br/>(Webhook / Form / Email / CRON)"] 
+    --> Orchestrator["n8n Orchestration Core<br/>(Error-Handling, Branching, State Management)"]
+    Orchestrator --> LLM["Multimodal AI Tier<br/>(Gemini 2.5 Flash / Claude 3.5 Sonnet)"]
+    Orchestrator --> DB["Vector / Relational Storage<br/>(Supabase Postgres + pgvector)"]
+    Orchestrator --> Action["Downstream Action Node<br/>(CRM Push / WhatsApp API / ERP Update)"]
+</div></div>
 <h4>Why n8n is the Industry Standard for Professional Agencies</h4>
 <p>While <strong>Make.com</strong> is user-friendly for non-technical beginners, <strong>n8n</strong> is the undisputed weapon of choice for enterprise-grade automation agencies:<br />
 1. <strong>Self-Hostable on Private Infrastructure:</strong> You can deploy n8n on a dedicated Linux VPS (DigitalOcean, AWS, or Hetzner) for $10 to $20/month. You can run hundreds of thousands of operations without being gouged by per-operation pricing.<br />
@@ -598,7 +642,8 @@ $$\mathbf{Implementation\ Sprint\ (\$5,000\ Setup)\ +\ Ongoing\ Automation\ SLA\
 </div>
 <h4>The Agency Solution:</h4>
 <p>Build an autonomous <strong>Speed-to-Lead Pipeline</strong>:</p>
-<pre><code class="language-mermaid">sequenceDiagram
+<div class="mermaid-diagram-card"><div class="mermaid">
+sequenceDiagram
     autonumber
     actor Lead as Inbound Prospect
     participant Form as Webhook Form / Ad Lead
@@ -608,14 +653,14 @@ $$\mathbf{Implementation\ Sprint\ (\$5,000\ Setup)\ +\ Ongoing\ Automation\ SLA\
     participant SMS as Twilio / Retell Voice API
     participant CRM as Client CRM (HubSpot / Close)
 
-    Lead-&gt;&gt;Form: Submits quote request
-    Form-&gt;&gt;Engine: Fires instant webhook (&lt; 0.5s)
-    Engine-&gt;&gt;Enrich: Grabs company size, LinkedIn, tech stack
-    Engine-&gt;&gt;AI: Synthesizes high-intent qualification score (1–10)
-    Engine-&gt;&gt;CRM: Creates deal &amp; routes to on-duty rep
-    Engine-&gt;&gt;SMS: Fires 2-way conversational SMS to Lead: &quot;Hi [Name], saw your request for [Service]...&quot;
-    SMS--&gt;&gt;Lead: Delivered to prospect's phone in 28 SECONDS!
-</code></pre>
+    Lead->>Form: Submits quote request
+    Form->>Engine: Fires instant webhook (< 0.5s)
+    Engine->>Enrich: Grabs company size, LinkedIn, tech stack
+    Engine->>AI: Synthesizes high-intent qualification score (1–10)
+    Engine->>CRM: Creates deal & routes to on-duty rep
+    Engine->>SMS: Fires 2-way conversational SMS to Lead: "Hi [Name], saw your request for [Service]..."
+    SMS-->>Lead: Delivered to prospect's phone in 28 SECONDS!
+</div></div>
 <p><strong>Client Value:</strong> This single workflow directly increases consultation bookings by 30% to 60% without the client spending an extra dime on ads. You charge <strong>$4,500 setup + $1,500/month retainer</strong>.</p>
 <hr />
 <h3>Workflow 2: Automated Customer Onboarding &amp; KYC Intake Infrastructure</h3>
@@ -670,13 +715,14 @@ $$\mathbf{Implementation\ Sprint\ (\$5,000\ Setup)\ +\ Ongoing\ Automation\ SLA\
 * If your system recovers just ONE case every two months ($48,000/year), it pays for itself completely. Every additional case is pure profit.</p>
 <p>When framed against $480,000 in lost revenue, a $36,000 investment is an immediate, obvious decision.</p>
 <h3>The 3-Tier Retainer Architecture</h3>
-<pre><code class="language-mermaid">graph TD
-    Tier1[&quot;&lt;b&gt;Tier 1: Operational Monitoring SLA ($1,500/mo)&lt;/b&gt;&lt;br/&gt;• 24/7 Webhook &amp; API monitoring&lt;br/&gt;• Up to 5 hours of minor workflow adjustments&lt;br/&gt;• Incident response within 4 business hours&quot;]
-    Tier2[&quot;&lt;b&gt;Tier 2: Growth Automation Partner ($3,500/mo - MOST POPULAR)&lt;/b&gt;&lt;br/&gt;• Everything in Tier 1&lt;br/&gt;• 1 New custom workflow build per month&lt;br/&gt;• Continuous prompt tuning &amp; latency optimization&lt;br/&gt;• Monthly executive operational review&quot;]
-    Tier3[&quot;&lt;b&gt;Tier 3: Dedicated Enterprise Transformation ($7,500/mo)&lt;/b&gt;&lt;br/&gt;• Everything in Tier 2&lt;br/&gt;• Unlimited workflow builds &amp; maintenance&lt;br/&gt;• Priority 1-hour SLA response&lt;br/&gt;• Weekly strategy call with executive team&quot;]
+<div class="mermaid-diagram-card"><div class="mermaid">
+graph TD
+    Tier1["Tier 1: Operational Monitoring SLA ($1,500/mo)<br/>• 24/7 Webhook & API monitoring<br/>• Up to 5 hours of minor workflow adjustments<br/>• Incident response within 4 business hours"]
+    Tier2["Tier 2: Growth Automation Partner ($3,500/mo - MOST POPULAR)<br/>• Everything in Tier 1<br/>• 1 New custom workflow build per month<br/>• Continuous prompt tuning & latency optimization<br/>• Monthly executive operational review"]
+    Tier3["Tier 3: Dedicated Enterprise Transformation ($7,500/mo)<br/>• Everything in Tier 2<br/>• Unlimited workflow builds & maintenance<br/>• Priority 1-hour SLA response<br/>• Weekly strategy call with executive team"]
 
-    Tier1 --&gt; Tier2 --&gt; Tier3
-</code></pre>
+    Tier1 --> Tier2 --> Tier3
+</div></div>
 <hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 5: Predictable Client Acquisition (Landing Your First 3–5 Retainers)</span></h2>
 <h3>The 5 Goldmine B2B Niches</h3>

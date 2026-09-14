@@ -390,6 +390,14 @@ def parse_markdown_manuscript(md_text):
         extensions=['tables', 'fenced_code', 'nl2br', 'sane_lists']
     )
 
+    # Convert mermaid code blocks into live rendered diagrams
+    def mermaid_replace(match):
+        code = match.group(1).strip()
+        code = code.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&").replace("&quot;", '"')
+        return f'<div class="mermaid-diagram-card"><div class="mermaid">\n{code}\n</div></div>'
+
+    html_body = re.sub(r'<pre><code class="language-mermaid">([\s\S]*?)</code></pre>', mermaid_replace, html_body)
+
     # Enhance chapter titles with special page-break classes
     html_body = re.sub(r'<h2>(Chapter \d+:.*?)</h2>', r'<h2 class="chapter-start"><span class="chapter-number">\1</span></h2>', html_body)
     html_body = re.sub(r'<h2>(Preface:.*?)</h2>', r'<h2 class="chapter-start">\1</h2>', html_body)
@@ -419,8 +427,50 @@ def build_book(book_config):
 <head>
   <meta charset="UTF-8">
   <title>{title}</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {{
+      mermaid.initialize({{
+        startOnLoad: true,
+        theme: 'neutral',
+        themeVariables: {{
+          primaryColor: '#F0F9FF',
+          primaryTextColor: '#0F172A',
+          primaryBorderColor: '#0284C7',
+          lineColor: '#0284C7',
+          secondaryColor: '#F8FAFC',
+          tertiaryColor: '#FFFFFF'
+        }},
+        fontFamily: 'Inter, sans-serif'
+      }});
+    }});
+  </script>
   <style>
 {CSS_STYLES}
+
+.mermaid-diagram-card {{
+  margin: 22px auto;
+  padding: 16px 20px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  text-align: center;
+  page-break-inside: avoid;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}}
+
+.mermaid-diagram-card svg {{
+  max-width: 100% !important;
+  height: auto !important;
+}}
+
+.mermaid {{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}}
   </style>
 </head>
 <body>
@@ -468,6 +518,8 @@ def build_book(book_config):
         "--headless=new",
         "--disable-gpu",
         "--no-pdf-header-footer",
+        "--virtual-time-budget=8000",
+        "--run-all-compositor-stages-before-draw",
         f"--print-to-pdf={abs_pdf}",
         f"file:///{abs_html}"
     ]

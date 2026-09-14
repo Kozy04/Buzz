@@ -153,9 +153,9 @@ Not all automation is created equal. Successful modern firms organize their oper
 
 ```mermaid
 graph TD
-    Tier1["<b>Tier 1: Deterministic Automation (Rules & Triggers)</b><br/>Bank feed rules, scheduled email reminders, folder sync, Zapier triggers.<br/><i>Predictable, rigid, breaks on edge cases.</i>"]
-    Tier2["<b>Tier 2: Perceptual AI (Vision & Document Intelligence)</b><br/>Reading receipts, extracting unformatted tables, semantic classification.<br/><i>Handles chaotic real-world inputs with high accuracy.</i>"]
-    Tier3["<b>Tier 3: Cognitive & Advisory AI (Reasoning & Synthesis)</b><br/>Variance analysis, cash flow anomaly detection, executive narrative reporting.<br/><i>Delivers high-value advisory insights to business owners.</i>"]
+    Tier1["Tier 1: Deterministic Automation (Rules & Triggers)<br/>Bank feed rules, scheduled email reminders, folder sync, Zapier triggers.<br/>Predictable, rigid, breaks on edge cases."]
+    Tier2["Tier 2: Perceptual AI (Vision & Document Intelligence)<br/>Reading receipts, extracting unformatted tables, semantic classification.<br/>Handles chaotic real-world inputs with high accuracy."]
+    Tier3["Tier 3: Cognitive & Advisory AI (Reasoning & Synthesis)<br/>Variance analysis, cash flow anomaly detection, executive narrative reporting.<br/>Delivers high-value advisory insights to business owners."]
 
     Tier1 --> Tier2 --> Tier3
 ```
@@ -481,9 +481,9 @@ Automation requires an immediate transition to **Value-Based, Tiered Monthly Ret
 
 ```mermaid
 graph TD
-    TierA["<b>Tier 1: Core Automated Compliance ($450–$750/mo)</b><br/>• Real-time bank feed reconciliation<br/>• Standardized digital receipt archive<br/>• Standard monthly P&L & Balance Sheet"]
-    TierB["<b>Tier 2: Management Accounting & Pulse ($1,250–$1,850/mo)</b><br/>• Everything in Tier 1<br/>• Monthly CEO Executive Narrative Brief<br/>• Rolling 90-day cash flow forecast<br/>• Mid-month variance alert"]
-    TierC["<b>Tier 3: Fractional CFO & Growth Partner ($2,750–$4,500/mo)</b><br/>• Everything in Tier 2<br/>• 45-minute monthly strategic board advisory call<br/>• Scenario modeling (Hiring, Price increases, Debt service)<br/>• Unit economics & Customer acquisition payback analysis"]
+    TierA["Tier 1: Core Automated Compliance ($450–$750/mo)<br/>• Real-time bank feed reconciliation<br/>• Standardized digital receipt archive<br/>• Standard monthly P&L & Balance Sheet"]
+    TierB["Tier 2: Management Accounting & Pulse ($1,250–$1,850/mo)<br/>• Everything in Tier 1<br/>• Monthly CEO Executive Narrative Brief<br/>• Rolling 90-day cash flow forecast<br/>• Mid-month variance alert"]
+    TierC["Tier 3: Fractional CFO & Growth Partner ($2,750–$4,500/mo)<br/>• Everything in Tier 2<br/>• 45-minute monthly strategic board advisory call<br/>• Scenario modeling & Unit economics"]
 
     TierA --> TierB --> TierC
 ```
@@ -505,22 +505,11 @@ This positioning immediately elevates your practice above 95% of local competito
 Do not attempt to automate your entire practice overnight. Follow this sequenced, 30-day transformation blueprint:
 
 ```mermaid
-gantt
-    title 30-Day Firm Modernization Timeline
-    dateFormat  YYYY-MM-DD
-    section Week 1: Intake
-    Audit Client Document Habits       :done,    w1_1, 2026-10-01, 2d
-    Deploy Standard File Ingestion Pipe:active,  w1_2, 2026-10-03, 3d
-    Configure Vision OCR Schema        :         w1_3, 2026-10-06, 2d
-    section Week 2: Ledger
-    Build Semantic Rulebook for Bank   :         w2_1, 2026-10-08, 4d
-    Test Pilot on 3 Friendly Clients   :         w2_2, 2026-10-12, 3d
-    section Week 3: Closing
-    Deploy Micro-Ask Missing Receipt   :         w3_1, 2026-10-15, 3d
-    Implement CEO Executive Brief Gen  :         w3_2, 2026-10-18, 4d
-    section Week 4: Retainers
-    Package Tiered Value Retainers     :         w4_1, 2026-10-22, 4d
-    Present Relaunch to Existing Base  :         w4_2, 2026-10-26, 5d
+flowchart TD
+    W1["Week 1: Document Intake Sanitization<br/>• Centralize client cloud folders<br/>• Deploy Vision AI renaming pipeline<br/>• Introduce client forwarding email"]
+    --> W2["Week 2: Bank Categorization & Prompt Tuning<br/>• Build Semantic Rulebook for Chart of Accounts<br/>• Run 3-client staging pilot (>95% accuracy)<br/>• Establish human-in-the-loop exception audit"]
+    --> W3["Week 3: Closing & Communication Automation<br/>• Deploy Micro-Ask Missing Receipt protocol<br/>• Ingest raw P&L/Balance Sheet into narrative engine<br/>• Deliver first CEO Executive Briefing"]
+    --> W4["Week 4: Retainer Packaging & Relaunch<br/>• Finalize 3-tier value advisory retainers<br/>• Host 15-min Modernization Reviews<br/>• Transition clients to monthly autopay"]
 ```
 
 ### Week 1: Document Intake Sanitization & Storage Architecture

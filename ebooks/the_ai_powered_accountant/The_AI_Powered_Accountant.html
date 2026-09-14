@@ -3,6 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <title>The AI-Powered Accountant</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: 'neutral',
+        themeVariables: {
+          primaryColor: '#F0F9FF',
+          primaryTextColor: '#0F172A',
+          primaryBorderColor: '#0284C7',
+          lineColor: '#0284C7',
+          secondaryColor: '#F8FAFC',
+          tertiaryColor: '#FFFFFF'
+        },
+        fontFamily: 'Inter, sans-serif'
+      });
+    });
+  </script>
   <style>
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap');
@@ -360,6 +378,30 @@ hr {
   page-break-inside: avoid;
 }
 
+
+.mermaid-diagram-card {
+  margin: 22px auto;
+  padding: 16px 20px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  text-align: center;
+  page-break-inside: avoid;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mermaid-diagram-card svg {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+.mermaid {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
   </style>
 </head>
 <body>
@@ -479,15 +521,16 @@ hr {
 * <strong>The faster and more efficient you become, the less revenue you generate.</strong><br />
 * <strong>The more clients you take on, the closer you push yourself and your team toward catastrophic burnout.</strong><br />
 * <strong>Your profit margins are strictly capped by the number of hours in a day.</strong></p>
-<pre><code class="language-mermaid">flowchart LR
-    A[&quot;Legacy Model&lt;br/&gt;(Billable Hour)&quot;] --&gt; B[&quot;Manual Data Entry&lt;br/&gt;(50+ hrs/mo)&quot;]
-    B --&gt; C[&quot;Client Chasing &amp; Administrative Friction&quot;]
-    C --&gt; D[&quot;Burnout Ceiling&lt;br/&gt;(15–20 Clients Max)&quot;]
+<div class="mermaid-diagram-card"><div class="mermaid">
+flowchart LR
+    A["Legacy Model<br/>(Billable Hour)"] --> B["Manual Data Entry<br/>(50+ hrs/mo)"]
+    B --> C["Client Chasing & Administrative Friction"]
+    C --> D["Burnout Ceiling<br/>(15–20 Clients Max)"]
 
-    E[&quot;AI-Augmented Model&lt;br/&gt;(Value Retainers)&quot;] --&gt; F[&quot;Automated Ingestion &amp; Vision OCR&lt;br/&gt;(2.5 hrs/mo)&quot;]
-    F --&gt; G[&quot;Proactive Advisory &amp; Cash Flow Insights&quot;]
-    G --&gt; H[&quot;Scale Ceiling&lt;br/&gt;(60–80+ Clients per Specialist)&quot;]
-</code></pre>
+    E["AI-Augmented Model<br/>(Value Retainers)"] --> F["Automated Ingestion & Vision OCR<br/>(2.5 hrs/mo)"]
+    F --> G["Proactive Advisory & Cash Flow Insights"]
+    G --> H["Scale Ceiling<br/>(60–80+ Clients per Specialist)"]
+</div></div>
 <h3>The Capacity Ceiling: Why Traditional Firms Burn Out at 15–20 Clients</h3>
 <p>Most solo accounting practitioners hit an impenetrable wall between 15 and 22 monthly clients. </p>
 <p>Why? Because client maintenance is not linear; it is exponential. Each additional client brings:<br />
@@ -499,13 +542,14 @@ hr {
 <p>To break through this ceiling, you must transition from being a <strong>manual processor</strong> to being the <strong>architect of an automated financial pipeline</strong>.</p>
 <h3>The 3-Tier Accounting Automation Hierarchy</h3>
 <p>Not all automation is created equal. Successful modern firms organize their operational technology across three distinct tiers:</p>
-<pre><code class="language-mermaid">graph TD
-    Tier1[&quot;&lt;b&gt;Tier 1: Deterministic Automation (Rules &amp; Triggers)&lt;/b&gt;&lt;br/&gt;Bank feed rules, scheduled email reminders, folder sync, Zapier triggers.&lt;br/&gt;&lt;i&gt;Predictable, rigid, breaks on edge cases.&lt;/i&gt;&quot;]
-    Tier2[&quot;&lt;b&gt;Tier 2: Perceptual AI (Vision &amp; Document Intelligence)&lt;/b&gt;&lt;br/&gt;Reading receipts, extracting unformatted tables, semantic classification.&lt;br/&gt;&lt;i&gt;Handles chaotic real-world inputs with high accuracy.&lt;/i&gt;&quot;]
-    Tier3[&quot;&lt;b&gt;Tier 3: Cognitive &amp; Advisory AI (Reasoning &amp; Synthesis)&lt;/b&gt;&lt;br/&gt;Variance analysis, cash flow anomaly detection, executive narrative reporting.&lt;br/&gt;&lt;i&gt;Delivers high-value advisory insights to business owners.&lt;/i&gt;&quot;]
+<div class="mermaid-diagram-card"><div class="mermaid">
+graph TD
+    Tier1["Tier 1: Deterministic Automation (Rules & Triggers)<br/>Bank feed rules, scheduled email reminders, folder sync, Zapier triggers.<br/>Predictable, rigid, breaks on edge cases."]
+    Tier2["Tier 2: Perceptual AI (Vision & Document Intelligence)<br/>Reading receipts, extracting unformatted tables, semantic classification.<br/>Handles chaotic real-world inputs with high accuracy."]
+    Tier3["Tier 3: Cognitive & Advisory AI (Reasoning & Synthesis)<br/>Variance analysis, cash flow anomaly detection, executive narrative reporting.<br/>Delivers high-value advisory insights to business owners."]
 
-    Tier1 --&gt; Tier2 --&gt; Tier3
-</code></pre>
+    Tier1 --> Tier2 --> Tier3
+</div></div>
 <ol>
 <li><strong>Tier 1: Deterministic Automation (Rules &amp; Triggers)</strong><br />
    These are traditional software rules: "If transaction description contains <em>Staples</em>, categorize as <em>Office Supplies</em>." While useful, deterministic rules are brittle. If the vendor appears as <code>STAPLES #0492 ONLINE</code>, the rule fails. If a client buys a laptop from Staples, it miscategorizes an asset as an expense.</li>
@@ -573,13 +617,14 @@ hr {
 <p>For 90% of firm workflow automation (receipt extraction, automated renaming, and bank feed categorization), <strong>Gemini 2.5 Flash</strong> has emerged as the premier operational engine due to its near-zero latency, rigorous structured JSON schema enforcement, and fractional-penny cost basis. For complex multi-page commercial contracts and complex tax notices, <strong>Claude 3.5 Sonnet</strong> offers unparalleled deep semantic reasoning.</p>
 <h3>Workflow Automation Orchestrators: n8n vs. Make vs. Zapier</h3>
 <p>An AI model is a brain without hands. To build an automated firm, you need an orchestrator that connects your incoming client emails, cloud storage (Google Drive, OneDrive, Dropbox), and accounting ledger.</p>
-<pre><code class="language-mermaid">flowchart TD
-    ClientEmail[&quot;Client Emails Receipt or Photo&quot;] --&gt; Watcher[&quot;Orchestrator Ingestion Node&lt;br/&gt;(n8n / Make Webhook)&quot;]
-    Watcher --&gt; VisionAI[&quot;Vision AI Processing&lt;br/&gt;(Gemini 2.5 Flash / Claude 3.5)&quot;]
-    VisionAI --&gt; CleanJSON[&quot;Structured JSON Output&lt;br/&gt;{Vendor, Date, Subtotal, Tax, Total, Category}&quot;]
-    CleanJSON --&gt; Ledger[&quot;Accounting API Push&lt;br/&gt;(QuickBooks / Xero / Database)&quot;]
-    CleanJSON --&gt; Archive[&quot;Standardized Cloud Archive&lt;br/&gt;/Clients/2026/Expenses/&quot;]
-</code></pre>
+<div class="mermaid-diagram-card"><div class="mermaid">
+flowchart TD
+    ClientEmail["Client Emails Receipt or Photo"] --> Watcher["Orchestrator Ingestion Node<br/>(n8n / Make Webhook)"]
+    Watcher --> VisionAI["Vision AI Processing<br/>(Gemini 2.5 Flash / Claude 3.5)"]
+    VisionAI --> CleanJSON["Structured JSON Output<br/>{Vendor, Date, Subtotal, Tax, Total, Category}"]
+    CleanJSON --> Ledger["Accounting API Push<br/>(QuickBooks / Xero / Database)"]
+    CleanJSON --> Archive["Standardized Cloud Archive<br/>/Clients/2026/Expenses/"]
+</div></div>
 <p>While <strong>Zapier</strong> is popular for simple one-step automations, it is economically and architecturally ill-suited for high-volume accounting firms:<br />
 * Zapier charges per task; processing 3,000 receipts per month across multiple clients quickly becomes prohibitively expensive.<br />
 * Zapier lacks robust error handling for failed API calls and complex branching logic.</p>
@@ -608,7 +653,8 @@ hr {
 <p>This manual process costs the average firm <strong>$18 to $25 in labor per client per month</strong>. Across 30 clients, that is $600 to $750 in monthly profit evaporating into naming files.</p>
 <h3>Building an Automated Document Ingestion &amp; Classification Pipeline</h3>
 <p>Here is the exact production architecture used by modern automated practices to process incoming client files in real time:</p>
-<pre><code class="language-mermaid">sequenceDiagram
+<div class="mermaid-diagram-card"><div class="mermaid">
+sequenceDiagram
     autonumber
     actor Client as Client / Business Owner
     participant Portal as Ingestion Channel (Email / WhatsApp / Portal)
@@ -617,14 +663,14 @@ hr {
     participant Storage as Structured Firm Archive
     participant Ledger as General Ledger (QBO / Xero)
 
-    Client-&gt;&gt;Portal: Sends image or PDF
-    Portal-&gt;&gt;Engine: Webhook triggers with file payload
-    Engine-&gt;&gt;Vision: Sends image with strict JSON schema prompt
-    Vision--&gt;&gt;Engine: Returns {Vendor, Date, Amount, Tax, CleanName, Category}
-    Engine-&gt;&gt;Storage: Saves file as &quot;2026-09-14_Adobe_INV-9128_$54.99.pdf&quot;
-    Engine-&gt;&gt;Ledger: Attaches receipt to matching pending transaction
-    Engine--&gt;&gt;Client: Sends instant 1-second confirmation: &quot;✓ Logged!&quot;
-</code></pre>
+    Client->>Portal: Sends image or PDF
+    Portal->>Engine: Webhook triggers with file payload
+    Engine->>Vision: Sends image with strict JSON schema prompt
+    Vision-->>Engine: Returns {Vendor, Date, Amount, Tax, CleanName, Category}
+    Engine->>Storage: Saves file as "2026-09-14_Adobe_INV-9128_$54.99.pdf"
+    Engine->>Ledger: Attaches receipt to matching pending transaction
+    Engine-->>Client: Sends instant 1-second confirmation: "✓ Logged!"
+</div></div>
 <h3>Intelligent Renaming Rules: Dates, Vendors, Tax Codes, and Totals</h3>
 <p>A firm's document archive is its primary defense during a tax audit. A clean, standardized naming convention transforms an audit from a multi-week nightmare into a 10-minute search.</p>
 <p>The standard institutional file naming convention is:</p>
@@ -743,11 +789,12 @@ Your Accounting Team
 <p>Business owners do not read 14-page PDF financial reports with multi-column financial statements. They glance at their bank account balance, shrug, and file the report away.</p>
 <p>This is why clients view traditional bookkeeping as a grudge expense: <strong>they are receiving compliance reports designed for the IRS, not actionable intelligence designed for a CEO.</strong></p>
 <p>With a modern LLM pipeline, you can ingest the raw trial balance, P&amp;L, and balance sheet and generate an <strong>Executive Financial Briefing</strong> in 45 seconds:</p>
-<pre><code class="language-mermaid">flowchart LR
-    RawReports[&quot;Raw Financial Reports&lt;br/&gt;(P&amp;L, Balance Sheet, Aging Accounts)&quot;] 
-    --&gt; AI[&quot;Financial Analysis LLM Engine&lt;br/&gt;(Structured Analytical Prompt)&quot;]
-    AI --&gt; ExecSummary[&quot;Executive CEO Briefing&lt;br/&gt;• Revenue Velocity &amp; Net Margin&lt;br/&gt;• Top 3 Expense Variances&lt;br/&gt;• 60-Day Runway &amp; Cash Buffer&lt;br/&gt;• Strategic Recommendations&quot;]
-</code></pre>
+<div class="mermaid-diagram-card"><div class="mermaid">
+flowchart LR
+    RawReports["Raw Financial Reports<br/>(P&L, Balance Sheet, Aging Accounts)"] 
+    --> AI["Financial Analysis LLM Engine<br/>(Structured Analytical Prompt)"]
+    AI --> ExecSummary["Executive CEO Briefing<br/>• Revenue Velocity & Net Margin<br/>• Top 3 Expense Variances<br/>• 60-Day Runway & Cash Buffer<br/>• Strategic Recommendations"]
+</div></div>
 <h4>The CEO Executive Briefing Prompt Template</h4>
 <pre><code class="language-markdown">You are the Fractional CFO for [Client Company Name], a [Client Industry] generating [Annual Revenue].
 Analyze the attached monthly Profit &amp; Loss and Balance Sheet comparing [Current Month] against [Prior Month] and [Same Month Last Year].
@@ -776,13 +823,14 @@ Tone: Peer-to-peer, razor-sharp, strategic, and encouraging. Avoid passive voice
 <h3>Escaping the $45/Hour Trap: The Fixed-Fee Advisory Model</h3>
 <p>Hourly billing is a trap. If you charge $50 per hour and use automation to complete a client's monthly books in 2 hours instead of 8 hours, you have just penalized yourself by reducing your fee from $400 to $100!</p>
 <p>Automation requires an immediate transition to <strong>Value-Based, Tiered Monthly Retainers</strong>:</p>
-<pre><code class="language-mermaid">graph TD
-    TierA[&quot;&lt;b&gt;Tier 1: Core Automated Compliance ($450–$750/mo)&lt;/b&gt;&lt;br/&gt;• Real-time bank feed reconciliation&lt;br/&gt;• Standardized digital receipt archive&lt;br/&gt;• Standard monthly P&amp;L &amp; Balance Sheet&quot;]
-    TierB[&quot;&lt;b&gt;Tier 2: Management Accounting &amp; Pulse ($1,250–$1,850/mo)&lt;/b&gt;&lt;br/&gt;• Everything in Tier 1&lt;br/&gt;• Monthly CEO Executive Narrative Brief&lt;br/&gt;• Rolling 90-day cash flow forecast&lt;br/&gt;• Mid-month variance alert&quot;]
-    TierC[&quot;&lt;b&gt;Tier 3: Fractional CFO &amp; Growth Partner ($2,750–$4,500/mo)&lt;/b&gt;&lt;br/&gt;• Everything in Tier 2&lt;br/&gt;• 45-minute monthly strategic board advisory call&lt;br/&gt;• Scenario modeling (Hiring, Price increases, Debt service)&lt;br/&gt;• Unit economics &amp; Customer acquisition payback analysis&quot;]
+<div class="mermaid-diagram-card"><div class="mermaid">
+graph TD
+    TierA["Tier 1: Core Automated Compliance ($450–$750/mo)<br/>• Real-time bank feed reconciliation<br/>• Standardized digital receipt archive<br/>• Standard monthly P&L & Balance Sheet"]
+    TierB["Tier 2: Management Accounting & Pulse ($1,250–$1,850/mo)<br/>• Everything in Tier 1<br/>• Monthly CEO Executive Narrative Brief<br/>• Rolling 90-day cash flow forecast<br/>• Mid-month variance alert"]
+    TierC["Tier 3: Fractional CFO & Growth Partner ($2,750–$4,500/mo)<br/>• Everything in Tier 2<br/>• 45-minute monthly strategic board advisory call<br/>• Scenario modeling & Unit economics"]
 
-    TierA --&gt; TierB --&gt; TierC
-</code></pre>
+    TierA --> TierB --> TierC
+</div></div>
 <h3>Packaging the "Automated Modern Accounting Firm" as a Competitive Moat</h3>
 <p>When pitching new clients, do not sell "bookkeeping." Bookkeeping is a commodity. </p>
 <p>Sell <strong>The Real-Time Financial Operating System</strong>:<br />
@@ -792,23 +840,13 @@ Tone: Peer-to-peer, razor-sharp, strategic, and encouraging. Avoid passive voice
 <hr />
 <h2 class="chapter-start"><span class="chapter-number">Chapter 7: The 30-Day Firm Transformation Implementation Roadmap</span></h2>
 <p>Do not attempt to automate your entire practice overnight. Follow this sequenced, 30-day transformation blueprint:</p>
-<pre><code class="language-mermaid">gantt
-    title 30-Day Firm Modernization Timeline
-    dateFormat  YYYY-MM-DD
-    section Week 1: Intake
-    Audit Client Document Habits       :done,    w1_1, 2026-10-01, 2d
-    Deploy Standard File Ingestion Pipe:active,  w1_2, 2026-10-03, 3d
-    Configure Vision OCR Schema        :         w1_3, 2026-10-06, 2d
-    section Week 2: Ledger
-    Build Semantic Rulebook for Bank   :         w2_1, 2026-10-08, 4d
-    Test Pilot on 3 Friendly Clients   :         w2_2, 2026-10-12, 3d
-    section Week 3: Closing
-    Deploy Micro-Ask Missing Receipt   :         w3_1, 2026-10-15, 3d
-    Implement CEO Executive Brief Gen  :         w3_2, 2026-10-18, 4d
-    section Week 4: Retainers
-    Package Tiered Value Retainers     :         w4_1, 2026-10-22, 4d
-    Present Relaunch to Existing Base  :         w4_2, 2026-10-26, 5d
-</code></pre>
+<div class="mermaid-diagram-card"><div class="mermaid">
+flowchart TD
+    W1["Week 1: Document Intake Sanitization<br/>• Centralize client cloud folders<br/>• Deploy Vision AI renaming pipeline<br/>• Introduce client forwarding email"]
+    --> W2["Week 2: Bank Categorization & Prompt Tuning<br/>• Build Semantic Rulebook for Chart of Accounts<br/>• Run 3-client staging pilot (>95% accuracy)<br/>• Establish human-in-the-loop exception audit"]
+    --> W3["Week 3: Closing & Communication Automation<br/>• Deploy Micro-Ask Missing Receipt protocol<br/>• Ingest raw P&L/Balance Sheet into narrative engine<br/>• Deliver first CEO Executive Briefing"]
+    --> W4["Week 4: Retainer Packaging & Relaunch<br/>• Finalize 3-tier value advisory retainers<br/>• Host 15-min Modernization Reviews<br/>• Transition clients to monthly autopay"]
+</div></div>
 <h3>Week 1: Document Intake Sanitization &amp; Storage Architecture</h3>
 <ul>
 <li><strong>Goal:</strong> Stop client files from scattering across personal text messages, random emails, and unorganized folders.</li>
