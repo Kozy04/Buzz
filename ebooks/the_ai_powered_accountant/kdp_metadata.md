@@ -10,7 +10,11 @@ This kit contains the exact fields, keywords, categories, and HTML description r
 * **Book Title:** `The AI-Powered Accountant`
 * **Subtitle:** `A Tactical Guide to Automating Client Onboarding, Receipt Reconciliation, Document Workflows, and Monthly Reporting with Modern AI`
 * **Series Information:** `The 2026 Practical AI Implementation Series` (Book 1)
-* **Author Name:** Your Name / Pen Name or Agency Name
+* **Author Byline:** `Korede P. Makinde`
+* **Amazon KDP Author Fields:**
+  * **First Name:** `Korede`
+  * **Middle Name / Initial:** `P.`
+  * **Last Name (Surname):** `Makinde`
 * **Primary Language:** English
 
 ---

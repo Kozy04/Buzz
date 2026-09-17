@@ -417,12 +417,12 @@ def parse_markdown_manuscript(md_text):
     # Transform callouts [!IMPORTANT], [!CAUTION], [!TIP]
     def callout_replace(match):
         ctype = match.group(1).lower()
-        content = match.group(2)
-        return f'<div class="callout callout-{ctype}"><strong>{ctype.upper()}:</strong> {content}</div>'
+        inner_lines = re.sub(r'^>\s*', '', match.group(2), flags=re.MULTILINE).strip()
+        inner_html = markdown.markdown(inner_lines, extensions=['sane_lists']).strip()
+        return f'<div class="callout callout-{ctype}">\n{inner_html}\n</div>'
     
     md_text = re.sub(r'>\s*\[!(IMPORTANT|CAUTION|TIP|NOTE)\]\s*\n((?:>.*\n?)+)', 
-                     lambda m: f'<div class="callout callout-{m.group(1).lower()}">' + 
-                               re.sub(r'^>\s*', '', m.group(2), flags=re.MULTILINE) + '</div>', 
+                     callout_replace, 
                      md_text)
 
     # Convert markdown to html with extensions
@@ -539,7 +539,7 @@ def build_book(book_config):
     <!-- BOTTOM FOOTER -->
     <div class="cover-footer">
       <div class="cover-author">{author}</div>
-      <div class="cover-imprint">Published by Antigravity Publishing Group &bull; {edition}</div>
+      <div class="cover-imprint">{edition}</div>
     </div>
   </div>
 
@@ -591,7 +591,7 @@ if __name__ == "__main__":
             "badge_text": "2026 Practical Implementation Series",
             "title": "The AI-Powered Accountant",
             "subtitle": "A Tactical Guide to Automating Client Onboarding, Receipt Reconciliation, Document Workflows, and Monthly Reporting with Modern AI",
-            "author": "Antigravity Publishing & Digital Assets Group",
+            "author": "Korede P. Makinde",
             "edition": "First Edition (2026) — Complete Master Edition"
         },
         {
@@ -604,7 +604,7 @@ if __name__ == "__main__":
             "badge_text": "2026 Agency Scaling Series",
             "title": "The 7-Figure AI Automation Agency Blueprint",
             "subtitle": "How to Build, Price, and Sell High-Ticket n8n, Make, and LLM Workflows to Real Businesses",
-            "author": "Antigravity Publishing & Digital Assets Group",
+            "author": "Korede P. Makinde",
             "edition": "First Edition (2026) — Complete Master Edition"
         }
     ]

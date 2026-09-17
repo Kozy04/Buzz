@@ -1,7 +1,7 @@
 # The AI-Powered Accountant
 ### A Tactical Guide to Automating Client Onboarding, Receipt Reconciliation, Document Workflows, and Monthly Reporting with Modern AI
 
-**Author:** Antigravity Publishing & Digital Assets Group  
+**Author:** Korede P. Makinde  
 **Edition:** First Edition (2026 Practical Implementation Series)  
 **Format:** Kindle Direct Publishing (eBook / Paperback) & Digital Masterclass Edition  
 
@@ -10,7 +10,7 @@
 ## Front Matter
 
 ### Copyright Notice
-Copyright © 2026 by Antigravity Publishing. All rights reserved.
+Copyright © 2026 by Korede P. Makinde. All rights reserved.
 
 No part of this publication may be reproduced, distributed, or transmitted in any form or by any means, including photocopying, recording, or other electronic or mechanical methods, without the prior written permission of the publisher, except in the case of brief quotations embodied in critical reviews and certain other noncommercial uses permitted by copyright law.
 
@@ -618,18 +618,17 @@ For each identified variance:
 
 ---
 
-## About the Author & Exclusive Reader Resources
+## About the Author
 
-This guide was developed by the **Antigravity Publishing & Digital Assets Group**, creators of automated B2B pipeline architectures, client acquisition engines, and modern SaaS workflow tools.
+This guide was written by **Korede P. Makinde**, software engineer and automation architect specializing in automated B2B pipeline architectures, client acquisition engines, and modern workflow tools.
 
-### 🎁 Free Reader Companion Toolkit
-As a reader of this book, you have access to the complete digital companion package, including:
-* Downloadable JSON workflow blueprints for n8n and Make.
-* Ready-to-copy Prompt Swipe Files formatted for direct API and chatbot deployment.
-* Editable Word/PDF Client AI Engagement Letter templates.
-* The Automated Firm ROI & Retainer Pricing Spreadsheet Calculator.
+### 📚 Implementation Toolkits & Templates Included
+To ensure immediate execution, all practical toolkits, prompt swipe files, and contract templates referenced in this guide are included directly in the appendices above:
+* **Appendix A:** The Firm AI Prompt Swipe File (Bank categorization, variance analysis, and client executive memos).
+* **Appendix B:** Client Data Security & AI Engagement Letter Clause (Legally compliant contract language with Zero Data Retention protection).
+* **Appendix C:** Accounting Automation Software Matrix & Operational Cost Calculator.
 
-Visit: **`https://kozy04.github.io/Buzz/`** to explore live pipeline tools, visual pitch generators, and automated client acquisition systems.
+Readers are encouraged to adapt and implement these templates directly within their accounting practice.
 
 ---
 *End of Manuscript — The AI-Powered Accountant (First Edition)*

@@ -1,7 +1,7 @@
 # The 7-Figure AI Automation Agency (AAA) Blueprint
 ### How to Build, Price, and Sell High-Ticket n8n, Make, and LLM Workflows to Real Businesses
 
-**Author:** Antigravity Publishing & Digital Assets Group  
+**Author:** Korede P. Makinde  
 **Edition:** First Edition (2026 Agency Scaling Series)  
 **Format:** Kindle Direct Publishing (eBook / Paperback) & High-Ticket Digital Bundle  
 
@@ -10,7 +10,7 @@
 ## Front Matter
 
 ### Copyright Notice
-Copyright © 2026 by Antigravity Publishing. All rights reserved.
+Copyright © 2026 by Korede P. Makinde. All rights reserved.
 
 No part of this publication may be reproduced, stored in a retrieval system, or transmitted in any form or by any means—electronic, mechanical, photocopying, recording, scanning, or otherwise—except as permitted under Section 107 or 108 of the 1976 United States Copyright Act, without prior written permission of the publisher.
 
@@ -434,17 +434,17 @@ Managing Partner, [Your Agency Name]
 
 ---
 
-## About the Author & Digital Resource Hub
+## About the Author
 
-Developed by the **Antigravity Publishing & Digital Assets Group**, architects of enterprise automation pipelines, B2B lead generation engines, and modern SaaS infrastructure.
+Written by **Korede P. Makinde**, software engineer, enterprise automation consultant, and architect of scalable B2B lead generation engines and modern SaaS infrastructure.
 
-### 🎁 Exclusive Reader Resource Package
-Readers of this blueprint receive full access to our digital implementation repository:
-* Complete, importable **n8n Workflow JSON Blueprints** for the 4 core high-ticket workflows.
-* Editable Word & PDF Master Services Agreement (MSA) and Statement of Work (SOW) legal templates.
-* The Agency Retainer Financial Model & Client Capacity Spreadsheet.
+### 📚 Implementation Toolkits & Templates Included
+To ensure immediate execution, all practical agency toolkits, contract agreements, questionnaires, and cold outreach swipe files referenced in this blueprint are included directly in the appendices above:
+* **Appendix A:** The Agency Master Services Agreement (MSA) & Statement of Work (SOW) Template (Complete contract terms with Zero Data Retention clauses).
+* **Appendix B:** The 20-Point Client Operational Audit Questionnaire (The exact diagnostic questions for discovery calls).
+* **Appendix C:** Cold Outreach Pitch Swipe File for 5 High-Paying Niches (Battle-tested outreach copy).
 
-Explore live tools, outreach engines, and workflow pipelines at: **`https://kozy04.github.io/Buzz/`**.
+Readers are encouraged to copy, customize, and deploy these frameworks directly in their agency operations.
 
 ---
 *End of Manuscript — The 7-Figure AI Automation Agency Blueprint (First Edition)*

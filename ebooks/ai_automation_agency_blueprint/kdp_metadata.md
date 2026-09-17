@@ -10,7 +10,11 @@ This kit provides the exact title, subtitle, 7 backend keywords, categories, and
 * **Book Title:** `The 7-Figure AI Automation Agency (AAA) Blueprint`
 * **Subtitle:** `How to Build, Price, and Sell High-Ticket n8n, Make, and LLM Workflows to Real Businesses`
 * **Series Information:** `The 2026 Practical AI Implementation Series` (Book 2)
-* **Author Name:** Your Name / Pen Name or Agency Name
+* **Author Byline:** `Korede P. Makinde`
+* **Amazon KDP Author Fields:**
+  * **First Name:** `Korede`
+  * **Middle Name / Initial:** `P.`
+  * **Last Name (Surname):** `Makinde`
 * **Primary Language:** English
 
 ---

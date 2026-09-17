@@ -124,6 +124,8 @@ let currentFilter = "all";
 let currentSearch = "";
 let activeLead = null;
 let activeTemplate = "receipt";
+let leadsPerPage = 40;
+let currentVisiblePage = 1;
 
 // Business / Campaign Presets
 const BUSINESS_PRESETS = {
@@ -484,23 +486,112 @@ function snoozeLeadFollowUp(leadId, days = 3) {
 // ==========================================
 // Initialization & Storage
 // ==========================================
-function init() {
-  loadData();
+// ==========================================
+// IndexedDB High-Capacity Storage Engine
+// ==========================================
+const DB_NAME = "buzz_crm_db";
+const DB_VERSION = 1;
+const STORE_LEADS = "leads";
+
+function openBuzzDB() {
+  return new Promise((resolve) => {
+    if (!window.indexedDB) {
+      resolve(null);
+      return;
+    }
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_LEADS)) {
+        db.createObjectStore(STORE_LEADS, { keyPath: "id" });
+      }
+    };
+    request.onsuccess = (e) => resolve(e.target.result);
+    request.onerror = (e) => {
+      console.warn("IndexedDB unavailable, falling back to localStorage", e);
+      resolve(null);
+    };
+  });
+}
+
+async function dbSaveAllLeads(leadsArray) {
+  const db = await openBuzzDB();
+  if (!db) {
+    try {
+      localStorage.setItem(STORAGE_KEY_LEADS, JSON.stringify(leadsArray));
+    } catch (e) {
+      console.warn("localStorage quota exceeded:", e);
+    }
+    return;
+  }
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_LEADS, "readwrite");
+    const store = tx.objectStore(STORE_LEADS);
+    store.clear();
+    for (const item of leadsArray) {
+      store.put(item);
+    }
+    tx.oncomplete = () => {
+      try {
+        // Keep a light 50-lead mirror in localStorage for instant offline warm start
+        localStorage.setItem(STORAGE_KEY_LEADS, JSON.stringify(leadsArray.slice(0, 50)));
+      } catch (e) {}
+      resolve();
+    };
+    tx.onerror = (err) => reject(err);
+  });
+}
+
+async function dbGetAllLeads() {
+  const db = await openBuzzDB();
+  if (!db) {
+    const saved = localStorage.getItem(STORAGE_KEY_LEADS);
+    if (saved) {
+      try { return JSON.parse(saved); } catch(e) {}
+    }
+    return null;
+  }
+  return new Promise((resolve) => {
+    const tx = db.transaction(STORE_LEADS, "readonly");
+    const store = tx.objectStore(STORE_LEADS);
+    const req = store.getAll();
+    req.onsuccess = () => {
+      const results = req.result;
+      if (results && results.length > 0) {
+        resolve(results);
+      } else {
+        // Migrate legacy localStorage leads if present
+        const saved = localStorage.getItem(STORAGE_KEY_LEADS);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              dbSaveAllLeads(parsed);
+              resolve(parsed);
+              return;
+            }
+          } catch(e) {}
+        }
+        resolve(null);
+      }
+    };
+    req.onerror = () => resolve(null);
+  });
+}
+
+async function init() {
+  await loadData();
   setupEventListeners();
   renderApp();
 }
 
-function loadData() {
-  const savedLeads = localStorage.getItem(STORAGE_KEY_LEADS);
-  if (savedLeads) {
-    try {
-      leads = JSON.parse(savedLeads);
-    } catch (e) {
-      leads = [...DEFAULT_LEADS];
-    }
+async function loadData() {
+  const storedLeads = await dbGetAllLeads();
+  if (storedLeads && storedLeads.length > 0) {
+    leads = storedLeads;
   } else {
     leads = [...DEFAULT_LEADS];
-    saveData();
+    await dbSaveAllLeads(leads);
   }
 
   const savedSettings = localStorage.getItem(STORAGE_KEY_SETTINGS);
@@ -561,7 +652,7 @@ function updateHeaderBranding() {
 }
 
 function saveData() {
-  localStorage.setItem(STORAGE_KEY_LEADS, JSON.stringify(leads));
+  dbSaveAllLeads(leads);
   updateKpiAndCounts();
 }
 
@@ -836,6 +927,9 @@ function updateKpiAndCounts() {
 function renderLeadsList() {
   const container = document.getElementById("leadsList");
   const emptyState = document.getElementById("emptyState");
+  const paginationBar = document.getElementById("paginationBar");
+  const paginationInfo = document.getElementById("paginationInfo");
+  const btnLoadMore = document.getElementById("btnLoadMoreLeads");
   container.innerHTML = "";
 
   const filtered = leads.filter(lead => {
@@ -850,22 +944,29 @@ function renderLeadsList() {
     // Filter by search
     if (currentSearch) {
       const q = currentSearch.toLowerCase();
-      const matchName = lead.firmName.toLowerCase().includes(q);
-      const matchPerson = lead.firstName.toLowerCase().includes(q);
+      const matchName = (lead.firmName || "").toLowerCase().includes(q);
+      const matchPerson = (lead.firstName || "").toLowerCase().includes(q);
+      const matchRole = (lead.jobTitle || "").toLowerCase().includes(q);
       const matchLoc = (lead.location || "").toLowerCase().includes(q);
-      const matchEmail = lead.email.toLowerCase().includes(q);
-      return matchName || matchPerson || matchLoc || matchEmail;
+      const matchEmail = (lead.email || "").toLowerCase().includes(q);
+      return matchName || matchPerson || matchRole || matchLoc || matchEmail;
     }
     return true;
   });
 
   if (filtered.length === 0) {
     emptyState.style.display = "block";
+    if (paginationBar) paginationBar.style.display = "none";
+    updateBulkUI();
     return;
   }
   emptyState.style.display = "none";
 
-  filtered.forEach(lead => {
+  // Virtualized progressive slice (40 leads per page)
+  const visibleLimit = currentVisiblePage * leadsPerPage;
+  const visibleSlice = filtered.slice(0, visibleLimit);
+
+  visibleSlice.forEach(lead => {
     const isSelected = selectedLeadIds.has(lead.id);
     const card = document.createElement("div");
     card.className = `lead-card has-checkbox ${isSelected ? "selected-for-bulk" : ""}`;
@@ -912,7 +1013,8 @@ function renderLeadsList() {
         <div>
           <h3 class="lead-firm-title">${escapeHtml(lead.firmName)}</h3>
           <div class="lead-contact-line">
-            <span>${escapeHtml(lead.firstName)}</span>
+            <span>👤 ${escapeHtml(lead.firstName)}</span>
+            ${lead.jobTitle ? `<span class="lead-role-pill">${escapeHtml(lead.jobTitle)}</span>` : ""}
             <span class="dot">•</span>
             <span>${escapeHtml(lead.location || "USA")}</span>
           </div>
@@ -925,7 +1027,7 @@ function renderLeadsList() {
       ${followupRowHtml}
 
       <div class="lead-hook-box">
-        "${escapeHtml(lead.personalHook || "potential client for receipt & invoice sorting")}"
+        "${escapeHtml(lead.personalHook || "potential client")}"
       </div>
 
       <div class="lead-card-actions">
@@ -1008,6 +1110,26 @@ function renderLeadsList() {
 
     container.appendChild(card);
   });
+
+  // Setup Pagination Bar
+  if (paginationBar && paginationInfo) {
+    if (filtered.length > visibleSlice.length) {
+      paginationBar.style.display = "flex";
+      paginationInfo.textContent = `Showing ${visibleSlice.length.toLocaleString()} of ${filtered.length.toLocaleString()} prospects`;
+      if (btnLoadMore) {
+        btnLoadMore.style.display = "inline-block";
+        btnLoadMore.textContent = `Load More Prospects (${Math.min(leadsPerPage, filtered.length - visibleSlice.length)} more) ▾`;
+      }
+    } else {
+      if (filtered.length > leadsPerPage) {
+        paginationBar.style.display = "flex";
+        paginationInfo.textContent = `Showing all ${filtered.length.toLocaleString()} prospects`;
+        if (btnLoadMore) btnLoadMore.style.display = "none";
+      } else {
+        paginationBar.style.display = "none";
+      }
+    }
+  }
 
   updateBulkUI();
 }
@@ -2128,6 +2250,8 @@ function openAddLeadModal() {
   if (statusEl) statusEl.value = "pending";
   const fuDateEl = document.getElementById("formFollowUpDate");
   if (fuDateEl) fuDateEl.value = "";
+  const jobTitleEl = document.getElementById("formJobTitle");
+  if (jobTitleEl) jobTitleEl.value = "";
   document.getElementById("modalLead").style.display = "flex";
 }
 
@@ -2136,6 +2260,8 @@ function openEditLeadModal(lead) {
   document.getElementById("editLeadId").value = lead.id;
   document.getElementById("formFirmName").value = lead.firmName;
   document.getElementById("formFirstName").value = lead.firstName;
+  const jobTitleEl = document.getElementById("formJobTitle");
+  if (jobTitleEl) jobTitleEl.value = lead.jobTitle || "";
   document.getElementById("formLocation").value = lead.location || "";
   document.getElementById("formEmail").value = lead.email;
   document.getElementById("formWebsite").value = lead.website || "";
@@ -2179,6 +2305,7 @@ function handleSaveLead(e) {
   const idVal = document.getElementById("editLeadId").value;
   const firmName = document.getElementById("formFirmName").value.trim();
   const firstName = document.getElementById("formFirstName").value.trim() || "there";
+  const jobTitle = document.getElementById("formJobTitle") ? document.getElementById("formJobTitle").value.trim() : "";
   const location = document.getElementById("formLocation").value.trim() || "USA";
   const email = document.getElementById("formEmail").value.trim();
   const website = document.getElementById("formWebsite").value.trim();
@@ -2198,6 +2325,7 @@ function handleSaveLead(e) {
     if (lead) {
       lead.firmName = firmName;
       lead.firstName = firstName;
+      lead.jobTitle = jobTitle;
       lead.location = location;
       lead.email = email;
       lead.website = website;
@@ -2212,6 +2340,7 @@ function handleSaveLead(e) {
       id: Date.now(),
       firmName,
       firstName,
+      jobTitle,
       location,
       email,
       website,
@@ -2507,6 +2636,461 @@ function resetToDefaults() {
     showToast("Reset to 10 default leads.");
     closeSettingsModal();
   }
+}
+
+// ==========================================
+// Universal B2B CSV / Excel Importer
+// ==========================================
+let parsedCsvRawRows = [];
+let parsedCsvHeaders = [];
+let currentCsvFileName = "";
+
+const DECISION_MAKER_REGEX = /\b(ceo|cto|cfo|coo|cmo|cro|cio|md|vp|chief\s+[a-z\s-]+officer|chief\s+executive|founder|co-founder|owner|co-owner|managing\s+director|managing\s+partner|president|partner|principal|director|head\s+of|vice\s+president)\b/i;
+
+function openCsvImportModal() {
+  resetCsvImportState();
+  const modal = document.getElementById("modalCsvImport");
+  if (modal) modal.style.display = "flex";
+}
+
+function closeCsvImportModal() {
+  const modal = document.getElementById("modalCsvImport");
+  if (modal) modal.style.display = "none";
+  resetCsvImportState();
+}
+
+function resetCsvImportState() {
+  parsedCsvRawRows = [];
+  parsedCsvHeaders = [];
+  currentCsvFileName = "";
+  const fileInput = document.getElementById("inputCsvFile");
+  if (fileInput) fileInput.value = "";
+  
+  const uploadArea = document.getElementById("csvUploadArea");
+  if (uploadArea) uploadArea.style.display = "block";
+  
+  const mappingArea = document.getElementById("csvMappingArea");
+  if (mappingArea) mappingArea.style.display = "none";
+  
+  const previewTbody = document.getElementById("csvPreviewTbody");
+  if (previewTbody) previewTbody.innerHTML = "";
+  
+  const btnConfirmText = document.getElementById("btnConfirmCsvText");
+  if (btnConfirmText) btnConfirmText.textContent = "Ingest Leads into Pipeline";
+}
+
+function detectDelimiter(firstLine) {
+  const commas = (firstLine.match(/,/g) || []).length;
+  const tabs = (firstLine.match(/\t/g) || []).length;
+  const semis = (firstLine.match(/;/g) || []).length;
+  if (tabs > commas && tabs > semis) return "\t";
+  if (semis > commas && semis > tabs) return ";";
+  return ",";
+}
+
+function parseCSVText(text) {
+  if (!text || !text.trim()) return [];
+  // Strip BOM if present
+  if (text.charCodeAt(0) === 0xFEFF) {
+    text = text.slice(1);
+  }
+
+  const firstLineEnd = text.search(/\r\n|\r|\n/);
+  const firstLine = firstLineEnd === -1 ? text : text.slice(0, firstLineEnd);
+  const delimiter = detectDelimiter(firstLine);
+
+  const rows = [];
+  let currentRow = [];
+  let currentVal = "";
+  let inQuotes = false;
+  const len = text.length;
+
+  for (let i = 0; i < len; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        currentVal += '"';
+        i++; // skip escaped quote
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === delimiter && !inQuotes) {
+      currentRow.push(currentVal.trim());
+      currentVal = "";
+    } else if ((char === "\r" || char === "\n") && !inQuotes) {
+      if (char === "\r" && nextChar === "\n") {
+        i++; // skip \n of \r\n
+      }
+      currentRow.push(currentVal.trim());
+      currentVal = "";
+      if (currentRow.some(cell => cell.length > 0)) {
+        rows.push(currentRow);
+      }
+      currentRow = [];
+    } else {
+      currentVal += char;
+    }
+  }
+
+  if (currentVal.length > 0 || currentRow.length > 0) {
+    currentRow.push(currentVal.trim());
+    if (currentRow.some(cell => cell.length > 0)) {
+      rows.push(currentRow);
+    }
+  }
+
+  return rows;
+}
+
+function handleCsvFileSelected(file) {
+  if (!file) return;
+  currentCsvFileName = file.name;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const text = e.target.result;
+      const allRows = parseCSVText(text);
+      if (!allRows || allRows.length < 2) {
+        showToast("The selected CSV appears to be empty or missing data rows.");
+        return;
+      }
+
+      parsedCsvHeaders = allRows[0].map(h => (h || "").trim());
+      parsedCsvRawRows = allRows.slice(1);
+
+      // Update UI elements
+      const fileNameEl = document.getElementById("csvFileName");
+      if (fileNameEl) fileNameEl.textContent = file.name;
+
+      const totalRowsEl = document.getElementById("csvTotalRows");
+      if (totalRowsEl) totalRowsEl.textContent = `${parsedCsvRawRows.length.toLocaleString()} rows detected`;
+
+      // Populate Column Selectors and auto-detect best matches
+      populateColumnSelectors(parsedCsvHeaders);
+
+      // Switch view from dropzone to mapping area
+      const uploadArea = document.getElementById("csvUploadArea");
+      if (uploadArea) uploadArea.style.display = "none";
+
+      const mappingArea = document.getElementById("csvMappingArea");
+      if (mappingArea) mappingArea.style.display = "block";
+
+      // Render initial preview
+      renderCsvPreview();
+    } catch (err) {
+      console.error("CSV parse error:", err);
+      showToast("Error reading CSV file. Please check file format.");
+    }
+  };
+  reader.onerror = () => {
+    showToast("Failed to read CSV file.");
+  };
+  reader.readAsText(file);
+}
+
+function detectCSVColumns(headers) {
+  const mapping = {
+    firmName: -1,
+    firstName: -1,
+    jobTitle: -1,
+    email: -1,
+    location: -1,
+    website: -1
+  };
+
+  const normalized = headers.map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ""));
+
+  headers.forEach((h, idx) => {
+    const norm = normalized[idx];
+
+    // Company / Firm Name
+    if (mapping.firmName === -1) {
+      if (/^(company|companyname|accountname|organization|organizationname|firm|firmname|businessname|employer)$/.test(norm) ||
+          norm.includes("companyname") || norm.includes("accountname")) {
+        mapping.firmName = idx;
+      }
+    }
+
+    // First Name / Name
+    if (mapping.firstName === -1) {
+      if (/^(firstname|first|givenname|contactfirstname)$/.test(norm) || norm.includes("firstname")) {
+        mapping.firstName = idx;
+      }
+    }
+
+    // Job Title / Role
+    if (mapping.jobTitle === -1) {
+      if (/^(title|jobtitle|role|position|headline|designation|occupation)$/.test(norm) ||
+          norm.includes("jobtitle") || norm.includes("headline")) {
+        mapping.jobTitle = idx;
+      }
+    }
+
+    // Email
+    if (mapping.email === -1) {
+      if (/^(email|emailaddress|directemail|contactemail|workemail|corporateemail|primaryemail)$/.test(norm) ||
+          norm.includes("email")) {
+        mapping.email = idx;
+      }
+    }
+
+    // Location / City
+    if (mapping.location === -1) {
+      if (/^(location|city|metro|state|hqlocation|headquarters|companycity|address)$/.test(norm) ||
+          norm.includes("location") || norm.includes("city")) {
+        mapping.location = idx;
+      }
+    }
+
+    // Website / URL
+    if (mapping.website === -1) {
+      if (/^(website|companywebsite|domain|companydomain|url|site)$/.test(norm) ||
+          norm.includes("website") || norm.includes("domain")) {
+        mapping.website = idx;
+      }
+    }
+  });
+
+  // Secondary fallback for First Name if no explicit "first name" column was found, look for "Full Name" / "Name"
+  if (mapping.firstName === -1) {
+    headers.forEach((h, idx) => {
+      const norm = normalized[idx];
+      if (/^(fullname|name|contactname|contact|leadname)$/.test(norm)) {
+        mapping.firstName = idx;
+      }
+    });
+  }
+
+  // Secondary fallback for Company if still -1
+  if (mapping.firmName === -1) {
+    headers.forEach((h, idx) => {
+      const norm = normalized[idx];
+      if (norm.includes("company") || norm.includes("firm")) {
+        mapping.firmName = idx;
+      }
+    });
+  }
+
+  return mapping;
+}
+
+function populateColumnSelectors(headers) {
+  const detected = detectCSVColumns(headers);
+  const fields = [
+    { id: "mapFirmName", detectedIdx: detected.firmName, required: true },
+    { id: "mapFirstName", detectedIdx: detected.firstName, required: true },
+    { id: "mapJobTitle", detectedIdx: detected.jobTitle, required: false },
+    { id: "mapEmail", detectedIdx: detected.email, required: true },
+    { id: "mapLocation", detectedIdx: detected.location, required: false },
+    { id: "mapWebsite", detectedIdx: detected.website, required: false }
+  ];
+
+  fields.forEach(field => {
+    const select = document.getElementById(field.id);
+    if (!select) return;
+    select.innerHTML = "";
+
+    const noneOpt = document.createElement("option");
+    noneOpt.value = "";
+    noneOpt.textContent = field.required ? "-- Select Column --" : "(None / Skip)";
+    select.appendChild(noneOpt);
+
+    headers.forEach((h, idx) => {
+      const opt = document.createElement("option");
+      opt.value = String(idx);
+      opt.textContent = `${h || `Column ${idx + 1}`} (${getHeaderSample(idx)})`;
+      if (idx === field.detectedIdx) {
+        opt.selected = true;
+      }
+      select.appendChild(opt);
+    });
+  });
+}
+
+function getHeaderSample(colIdx) {
+  for (let i = 0; i < Math.min(parsedCsvRawRows.length, 5); i++) {
+    const val = parsedCsvRawRows[i][colIdx];
+    if (val && val.trim().length > 0) {
+      const trimmed = val.trim();
+      return trimmed.length > 18 ? trimmed.slice(0, 18) + "…" : trimmed;
+    }
+  }
+  return "empty";
+}
+
+function cleanFirstName(rawName) {
+  if (!rawName) return "there";
+  let cleaned = rawName.trim();
+  // Strip common prefixes
+  cleaned = cleaned.replace(/^(mr\.|mrs\.|ms\.|dr\.|prof\.)\s+/i, "");
+  const parts = cleaned.split(/\s+/);
+  if (parts.length > 0 && parts[0]) {
+    const first = parts[0].replace(/[^a-zA-Z\xC0-\u024F\u1E00-\u1EFF'-]/g, "");
+    if (first.length >= 2) {
+      return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+    }
+  }
+  return "there";
+}
+
+function renderCsvPreview() {
+  const tbody = document.getElementById("csvPreviewTbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  const firmIdx = document.getElementById("mapFirmName")?.value;
+  const nameIdx = document.getElementById("mapFirstName")?.value;
+  const titleIdx = document.getElementById("mapJobTitle")?.value;
+  const emailIdx = document.getElementById("mapEmail")?.value;
+  const locIdx = document.getElementById("mapLocation")?.value;
+
+  const filterDecision = document.getElementById("chkFilterDecisionMakers")?.checked;
+  const skipExisting = document.getElementById("chkSkipExistingEmails")?.checked;
+  const existingEmails = new Set(leads.map(l => (l.email || "").trim().toLowerCase()).filter(Boolean));
+
+  let previewCount = 0;
+  let totalEligibleCount = 0;
+
+  for (let i = 0; i < parsedCsvRawRows.length; i++) {
+    const row = parsedCsvRawRows[i];
+    const rawEmail = (emailIdx !== "" && emailIdx !== undefined && row[Number(emailIdx)]) ? row[Number(emailIdx)].trim() : "";
+    const rawTitle = (titleIdx !== "" && titleIdx !== undefined && row[Number(titleIdx)]) ? row[Number(titleIdx)].trim() : "";
+    const rawFirm = (firmIdx !== "" && firmIdx !== undefined && row[Number(firmIdx)]) ? row[Number(firmIdx)].trim() : "";
+    const rawName = (nameIdx !== "" && nameIdx !== undefined && row[Number(nameIdx)]) ? row[Number(nameIdx)].trim() : "";
+    const rawLoc = (locIdx !== "" && locIdx !== undefined && row[Number(locIdx)]) ? row[Number(locIdx)].trim() : "";
+
+    // Decision-maker filter check
+    if (filterDecision && !DECISION_MAKER_REGEX.test(rawTitle)) {
+      continue;
+    }
+
+    // Skip duplicates check
+    const cleanMail = rawEmail.toLowerCase();
+    if (skipExisting && cleanMail && existingEmails.has(cleanMail)) {
+      continue;
+    }
+
+    totalEligibleCount++;
+
+    if (previewCount < 3) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td style="font-weight: 600; color: #fff;">${escapeHtml(rawFirm || "—")}</td>
+        <td>${escapeHtml(cleanFirstName(rawName))}</td>
+        <td>${rawTitle ? `<span class="lead-role-pill">${escapeHtml(rawTitle)}</span>` : '<span style="color: var(--text-muted);">—</span>'}</td>
+        <td style="color: var(--accent-cyan); font-family: monospace; font-size: 11px;">${escapeHtml(rawEmail || "—")}</td>
+        <td style="color: var(--text-muted);">${escapeHtml(rawLoc || "USA")}</td>
+      `;
+      tbody.appendChild(tr);
+      previewCount++;
+    }
+  }
+
+  if (previewCount === 0) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">
+        No rows match the selected filters or mappings.
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  // Update confirm button text
+  const btnConfirmText = document.getElementById("btnConfirmCsvText");
+  if (btnConfirmText) {
+    if (totalEligibleCount > 0) {
+      btnConfirmText.textContent = `Ingest ${totalEligibleCount.toLocaleString()} Leads into Pipeline`;
+    } else {
+      btnConfirmText.textContent = "Ingest Leads into Pipeline";
+    }
+  }
+}
+
+function executeCsvImport() {
+  const firmIdx = document.getElementById("mapFirmName")?.value;
+  const nameIdx = document.getElementById("mapFirstName")?.value;
+  const titleIdx = document.getElementById("mapJobTitle")?.value;
+  const emailIdx = document.getElementById("mapEmail")?.value;
+  const locIdx = document.getElementById("mapLocation")?.value;
+  const webIdx = document.getElementById("mapWebsite")?.value;
+
+  if (firmIdx === "" || emailIdx === "") {
+    showToast("Please map at least Company Name and Direct Email.");
+    return;
+  }
+
+  const filterDecision = document.getElementById("chkFilterDecisionMakers")?.checked;
+  const skipExisting = document.getElementById("chkSkipExistingEmails")?.checked;
+  const existingEmails = new Set(leads.map(l => (l.email || "").trim().toLowerCase()).filter(Boolean));
+
+  let importedCount = 0;
+  let nextId = Date.now();
+  const newLeads = [];
+
+  for (let i = 0; i < parsedCsvRawRows.length; i++) {
+    const row = parsedCsvRawRows[i];
+    const rawEmail = (emailIdx !== "" && row[Number(emailIdx)]) ? row[Number(emailIdx)].trim() : "";
+    if (!rawEmail || !rawEmail.includes("@")) continue;
+
+    const cleanMail = rawEmail.toLowerCase();
+    if (skipExisting && existingEmails.has(cleanMail)) continue;
+
+    const rawTitle = (titleIdx !== "" && row[Number(titleIdx)]) ? row[Number(titleIdx)].trim() : "";
+    if (filterDecision && !DECISION_MAKER_REGEX.test(rawTitle)) continue;
+
+    const rawFirm = (firmIdx !== "" && row[Number(firmIdx)]) ? row[Number(firmIdx)].trim() : "Company";
+    const rawName = (nameIdx !== "" && row[Number(nameIdx)]) ? row[Number(nameIdx)].trim() : "";
+    const rawLoc = (locIdx !== "" && row[Number(locIdx)]) ? row[Number(locIdx)].trim() : "USA";
+    let rawWeb = (webIdx !== "" && row[Number(webIdx)]) ? row[Number(webIdx)].trim() : "";
+
+    if (rawWeb && !rawWeb.startsWith("http://") && !rawWeb.startsWith("https://") && rawWeb.includes(".")) {
+      rawWeb = "https://" + rawWeb;
+    }
+
+    const firstName = cleanFirstName(rawName);
+
+    // Dynamic hook generation based on lead data
+    let personalHook = "";
+    if (rawTitle && rawFirm) {
+      personalHook = `noticed your leadership as ${rawTitle} at ${rawFirm}`;
+    } else if (rawFirm) {
+      personalHook = `came across ${rawFirm} and noticed your work in ${rawLoc}`;
+    } else {
+      personalHook = "noticed your impressive work and thought to reach out";
+    }
+
+    newLeads.push({
+      id: nextId++,
+      firmName: rawFirm,
+      firstName: firstName,
+      jobTitle: rawTitle,
+      email: cleanMail,
+      location: rawLoc,
+      website: rawWeb,
+      personalHook: personalHook,
+      status: "pending"
+    });
+
+    existingEmails.add(cleanMail);
+    importedCount++;
+  }
+
+  if (importedCount === 0) {
+    showToast("No new leads were imported (all rows filtered or already exist).");
+    return;
+  }
+
+  // Prepend new leads so latest imported leads appear at the top
+  leads = [...newLeads, ...leads];
+  saveData();
+  currentVisiblePage = 1;
+  renderApp();
+  closeCsvImportModal();
+  showToast(`Successfully ingested ${importedCount.toLocaleString()} leads into pipeline! 🚀`);
 }
 
 // ==========================================
@@ -2870,6 +3454,7 @@ function setupEventListeners() {
       document.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
       chip.classList.add("active");
       currentFilter = chip.dataset.filter;
+      currentVisiblePage = 1;
       renderLeadsList();
     });
   });
@@ -2890,6 +3475,7 @@ function setupEventListeners() {
   searchInput.addEventListener("input", (e) => {
     currentSearch = e.target.value.trim();
     clearBtn.style.display = currentSearch ? "block" : "none";
+    currentVisiblePage = 1;
     renderLeadsList();
   });
 
@@ -2897,6 +3483,7 @@ function setupEventListeners() {
     searchInput.value = "";
     currentSearch = "";
     clearBtn.style.display = "none";
+    currentVisiblePage = 1;
     renderLeadsList();
   });
 
@@ -3130,6 +3717,101 @@ function setupEventListeners() {
   document.getElementById("inputImportFile").addEventListener("change", importData);
   document.getElementById("btnClearAllLeads")?.addEventListener("click", clearAllLeads);
   document.getElementById("btnResetDefaults").addEventListener("click", resetToDefaults);
+
+  // Progressive Pagination
+  const btnLoadMoreLeads = document.getElementById("btnLoadMoreLeads");
+  if (btnLoadMoreLeads) {
+    btnLoadMoreLeads.addEventListener("click", () => {
+      currentVisiblePage++;
+      renderLeadsList();
+    });
+  }
+
+  // Universal B2B CSV Importer Listeners
+  const btnOpenCsvImport = document.getElementById("btnOpenCsvImport");
+  if (btnOpenCsvImport) btnOpenCsvImport.addEventListener("click", openCsvImportModal);
+
+  const btnOpenCsvFromSettings = document.getElementById("btnOpenCsvFromSettings");
+  if (btnOpenCsvFromSettings) {
+    btnOpenCsvFromSettings.addEventListener("click", () => {
+      closeSettingsModal();
+      openCsvImportModal();
+    });
+  }
+
+  const btnCloseCsvImport = document.getElementById("btnCloseCsvImport");
+  if (btnCloseCsvImport) btnCloseCsvImport.addEventListener("click", closeCsvImportModal);
+
+  const btnCancelCsvImport = document.getElementById("btnCancelCsvImport");
+  if (btnCancelCsvImport) btnCancelCsvImport.addEventListener("click", closeCsvImportModal);
+
+  const btnBrowseCsv = document.getElementById("btnBrowseCsv");
+  const inputCsvFile = document.getElementById("inputCsvFile");
+  if (btnBrowseCsv && inputCsvFile) {
+    btnBrowseCsv.addEventListener("click", (e) => {
+      e.stopPropagation();
+      inputCsvFile.click();
+    });
+  }
+
+  if (inputCsvFile) {
+    inputCsvFile.addEventListener("change", (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleCsvFileSelected(e.target.files[0]);
+      }
+    });
+  }
+
+  const btnChangeCsvFile = document.getElementById("btnChangeCsvFile");
+  if (btnChangeCsvFile && inputCsvFile) {
+    btnChangeCsvFile.addEventListener("click", () => inputCsvFile.click());
+  }
+
+  // Dropzone drag & drop events
+  const csvUploadArea = document.getElementById("csvUploadArea");
+  if (csvUploadArea) {
+    csvUploadArea.addEventListener("click", (e) => {
+      if (e.target !== btnBrowseCsv) {
+        inputCsvFile?.click();
+      }
+    });
+
+    csvUploadArea.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      csvUploadArea.classList.add("dragover");
+    });
+
+    csvUploadArea.addEventListener("dragleave", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      csvUploadArea.classList.remove("dragover");
+    });
+
+    csvUploadArea.addEventListener("drop", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      csvUploadArea.classList.remove("dragover");
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleCsvFileSelected(e.dataTransfer.files[0]);
+      }
+    });
+  }
+
+  // Mapping select changes & filter toggles trigger real-time preview re-render
+  ["mapFirmName", "mapFirstName", "mapJobTitle", "mapEmail", "mapLocation", "mapWebsite"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("change", renderCsvPreview);
+  });
+
+  const chkFilterDecisionMakers = document.getElementById("chkFilterDecisionMakers");
+  if (chkFilterDecisionMakers) chkFilterDecisionMakers.addEventListener("change", renderCsvPreview);
+
+  const chkSkipExistingEmails = document.getElementById("chkSkipExistingEmails");
+  if (chkSkipExistingEmails) chkSkipExistingEmails.addEventListener("change", renderCsvPreview);
+
+  const btnConfirmCsvImport = document.getElementById("btnConfirmCsvImport");
+  if (btnConfirmCsvImport) btnConfirmCsvImport.addEventListener("click", executeCsvImport);
 
   // Close modals on overlay backdrop tap
   document.querySelectorAll(".modal-overlay").forEach(overlay => {
