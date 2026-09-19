@@ -899,7 +899,9 @@ function updateKpiAndCounts() {
   const total = leads.length;
   const contacted = leads.filter(l => l.status === "contacted").length;
   const sample = leads.filter(l => l.status === "sample").length;
-  const won = leads.filter(l => l.status === "won").length;
+  const wonLeads = leads.filter(l => l.status === "won");
+  const won = wonLeads.length;
+  const wonRevenue = wonLeads.reduce((sum, l) => sum + (Number(l.dealValue) || 0), 0);
   const pending = leads.filter(l => l.status === "pending").length;
   const followups = leads.filter(l => l.status === "contacted" && isFollowUpDue(l)).length;
 
@@ -907,6 +909,16 @@ function updateKpiAndCounts() {
   document.getElementById("kpiContacted").textContent = contacted;
   document.getElementById("kpiSample").textContent = sample;
   document.getElementById("kpiWon").textContent = won;
+
+  const kpiWonRevenue = document.getElementById("kpiWonRevenue");
+  if (kpiWonRevenue) {
+    if (wonRevenue > 0) {
+      kpiWonRevenue.style.display = "inline";
+      kpiWonRevenue.textContent = `($${wonRevenue.toLocaleString()})`;
+    } else {
+      kpiWonRevenue.style.display = "none";
+    }
+  }
 
   document.getElementById("countAll").textContent = total;
   document.getElementById("countPending").textContent = pending;
@@ -1019,9 +1031,12 @@ function renderLeadsList() {
             <span>${escapeHtml(lead.location || "USA")}</span>
           </div>
         </div>
-        <span class="status-badge ${statusBadgeClass}" data-id="${lead.id}" title="Tap to cycle status">
-          ${statusLabelMap[lead.status] || "Pending"}
-        </span>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          ${(lead.status === "won" && lead.dealValue && Number(lead.dealValue) > 0) ? `<span class="lead-deal-badge">💵 $${Number(lead.dealValue).toLocaleString()}</span>` : ""}
+          <span class="status-badge ${statusBadgeClass}" data-id="${lead.id}" title="Tap to cycle status">
+            ${statusLabelMap[lead.status] || "Pending"}
+          </span>
+        </div>
       </div>
 
       ${followupRowHtml}
@@ -1029,6 +1044,12 @@ function renderLeadsList() {
       <div class="lead-hook-box">
         "${escapeHtml(lead.personalHook || "potential client")}"
       </div>
+
+      ${(lead.notes && lead.notes.trim()) ? `
+        <div class="lead-notes-box">
+          <span class="lead-notes-label">📝 Notes:</span> ${escapeHtml(lead.notes.trim())}
+        </div>
+      ` : ""}
 
       <div class="lead-card-actions">
         <div class="action-btn-group">
@@ -2248,6 +2269,10 @@ function openAddLeadModal() {
   if (delBtn) delBtn.style.display = "none";
   const statusEl = document.getElementById("formStatus");
   if (statusEl) statusEl.value = "pending";
+  const dealValEl = document.getElementById("formDealValue");
+  if (dealValEl) dealValEl.value = "";
+  const notesEl = document.getElementById("formNotes");
+  if (notesEl) notesEl.value = "";
   const fuDateEl = document.getElementById("formFollowUpDate");
   if (fuDateEl) fuDateEl.value = "";
   const jobTitleEl = document.getElementById("formJobTitle");
@@ -2267,6 +2292,11 @@ function openEditLeadModal(lead) {
   document.getElementById("formWebsite").value = lead.website || "";
   document.getElementById("formHook").value = lead.personalHook || "";
   
+  const dealValEl = document.getElementById("formDealValue");
+  if (dealValEl) dealValEl.value = (lead.dealValue !== undefined && lead.dealValue !== null) ? lead.dealValue : "";
+  const notesEl = document.getElementById("formNotes");
+  if (notesEl) notesEl.value = lead.notes || "";
+
   const delBtn = document.getElementById("btnDeleteLeadModal");
   if (delBtn) delBtn.style.display = "inline-flex";
 
@@ -2312,6 +2342,8 @@ function handleSaveLead(e) {
   const personalHook = document.getElementById("formHook").value.trim() || "noticed your client services";
   
   const statusVal = document.getElementById("formStatus") ? document.getElementById("formStatus").value : "pending";
+  const dealValueVal = document.getElementById("formDealValue") ? parseFloat(document.getElementById("formDealValue").value) || 0 : 0;
+  const notesVal = document.getElementById("formNotes") ? document.getElementById("formNotes").value.trim() : "";
   const followUpDateVal = document.getElementById("formFollowUpDate") ? document.getElementById("formFollowUpDate").value : "";
 
   if (!firmName || !email) {
@@ -2331,6 +2363,8 @@ function handleSaveLead(e) {
       lead.website = website;
       lead.personalHook = personalHook;
       lead.status = statusVal;
+      lead.dealValue = dealValueVal;
+      lead.notes = notesVal;
       lead.followUpDueAt = followUpDateVal ? new Date(followUpDateVal).toISOString() : null;
       showToast("Prospect updated");
     }
@@ -2346,6 +2380,8 @@ function handleSaveLead(e) {
       website,
       personalHook,
       status: statusVal,
+      dealValue: dealValueVal,
+      notes: notesVal,
       followUpDueAt: followUpDateVal ? new Date(followUpDateVal).toISOString() : null,
       followUpCount: 0
     };
@@ -2588,6 +2624,92 @@ function exportData() {
   downloadAnchor.click();
   downloadAnchor.remove();
   showToast("Leads backup exported!");
+}
+
+function exportPipelineCsv() {
+  if (!leads || leads.length === 0) {
+    showToast("No leads in pipeline to export.");
+    return;
+  }
+
+  let listToExport = [];
+  let exportScopeLabel = "all";
+
+  if (selectedLeadIds && selectedLeadIds.size > 0) {
+    listToExport = leads.filter(l => selectedLeadIds.has(l.id));
+    exportScopeLabel = `selected_${selectedLeadIds.size}`;
+  } else if (currentFilter && currentFilter !== "all") {
+    if (currentFilter === "followups") {
+      listToExport = leads.filter(l => l.status === "contacted" && isFollowUpDue(l));
+    } else {
+      listToExport = leads.filter(l => l.status === currentFilter);
+    }
+    exportScopeLabel = currentFilter;
+  } else {
+    listToExport = [...leads];
+    exportScopeLabel = "all";
+  }
+
+  if (listToExport.length === 0) {
+    showToast("No matching leads found for export.");
+    return;
+  }
+
+  const headers = [
+    "Company",
+    "Contact First Name",
+    "Job Title",
+    "Direct Email",
+    "Location",
+    "Website",
+    "Personal Hook",
+    "Pipeline Status",
+    "Deal Value ($)",
+    "Next Follow-Up Date",
+    "Follow-Up Cadence Step",
+    "Last Contacted Date",
+    "Notes & Activity"
+  ];
+
+  const escapeCsvVal = (val) => {
+    if (val === undefined || val === null) return '""';
+    const s = String(val).replace(/"/g, '""');
+    return `"${s}"`;
+  };
+
+  const rows = listToExport.map(l => {
+    const fuDate = l.followUpDueAt ? l.followUpDueAt.split("T")[0] : "";
+    const lastDate = l.lastContactedAt ? l.lastContactedAt.split("T")[0] : "";
+    return [
+      escapeCsvVal(l.firmName || ""),
+      escapeCsvVal(l.firstName || ""),
+      escapeCsvVal(l.jobTitle || ""),
+      escapeCsvVal(l.email || ""),
+      escapeCsvVal(l.location || ""),
+      escapeCsvVal(l.website || ""),
+      escapeCsvVal(l.personalHook || ""),
+      escapeCsvVal(l.status || "pending"),
+      escapeCsvVal(l.dealValue || 0),
+      escapeCsvVal(fuDate),
+      escapeCsvVal(l.followUpCount || 0),
+      escapeCsvVal(lastDate),
+      escapeCsvVal(l.notes || "")
+    ].join(",");
+  });
+
+  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const dateStr = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `buzz_pipeline_${exportScopeLabel}_${dateStr}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast(`Exported ${listToExport.length} leads to CSV! 📤`);
 }
 
 function importData(e) {
@@ -3698,11 +3820,53 @@ async function startAutoPilotExecution() {
     }
 
     firmNameEl.textContent = `${lead.firmName} (${lead.firstName})`;
-    firmDetailEl.textContent = "Personalizing pitch copy with Gemini AI...";
     label.textContent = `Processing Prospect ${i + 1} of ${total}`;
 
-    // Step 1: Personalized AI Pitch
-    const pitch = await generatePitchForLead(lead);
+    // Determine Cadence Strategy
+    const stratRadio = document.querySelector('input[name="autoPilotStrategy"]:checked');
+    const isSmartCadence = stratRadio ? stratRadio.value === "smart" : true;
+
+    let emailSubject = "";
+    let emailBody = "";
+    let stepTitle = "Step 1 (Pitch)";
+    let nextSchedDays = 3;
+
+    if (isSmartCadence && lead.status === "contacted" && (lead.followUpCount || 0) >= 1) {
+      const fuCount = lead.followUpCount || 1;
+      if (fuCount === 1) {
+        // Step 2: Bump (Day 3)
+        const tmpl = TEMPLATES.followup1;
+        emailSubject = tmpl.getSubject(lead);
+        emailBody = tmpl.getBody(lead);
+        stepTitle = "Step 2 (Bump)";
+        nextSchedDays = 4;
+      } else if (fuCount === 2) {
+        // Step 3: Proof / Case Study (Day 7)
+        const tmpl = TEMPLATES.followup2;
+        emailSubject = tmpl.getSubject(lead);
+        emailBody = tmpl.getBody(lead);
+        stepTitle = "Step 3 (Proof)";
+        nextSchedDays = 7;
+      } else {
+        // Step 4: Breakup / Closing (Day 14)
+        const tmpl = TEMPLATES.followup3;
+        emailSubject = tmpl.getSubject(lead);
+        emailBody = tmpl.getBody(lead);
+        stepTitle = "Step 4 (Breakup)";
+        nextSchedDays = 0;
+      }
+      firmDetailEl.textContent = `Preparing ${stepTitle} follow-up email...`;
+      if (pillEl) pillEl.textContent = `Drafting ${stepTitle}...`;
+    } else {
+      // Step 1: Initial Pitch
+      stepTitle = "Step 1 (Pitch)";
+      nextSchedDays = 3;
+      firmDetailEl.textContent = "Personalizing pitch copy with Gemini AI...";
+      if (pillEl) pillEl.textContent = "Crafting Pitch...";
+      const pitch = await generatePitchForLead(lead);
+      emailSubject = pitch.subject;
+      emailBody = pitch.body;
+    }
 
     // Step 2: Render Branded Visual Mockup
     firmDetailEl.textContent = "Generating custom branded mockup (.jpg)...";
@@ -3717,19 +3881,19 @@ async function startAutoPilotExecution() {
       settings.valueProp
     );
 
-    let finalBody = pitch.body;
-    if (!finalBody.includes("P.S. I put together a quick visual preview")) {
+    let finalBody = emailBody;
+    if (stepTitle.includes("Step 1") && !finalBody.includes("P.S. I put together a quick visual preview")) {
       finalBody = finalBody.trim() + `\n\nP.S. I put together a quick visual preview of what ${lead.firmName}'s workflow looks like with ${settings.businessName}—see the attached image!`;
     }
 
     // Step 3: Dispatch email directly via bridge
-    firmDetailEl.textContent = `Dispatching directly to ${lead.email}...`;
+    firmDetailEl.textContent = `Dispatching ${stepTitle} directly to ${lead.email}...`;
     if (pillEl) pillEl.textContent = "Sending Email...";
 
     const cleanFirm = (lead.firmName || "lead").toLowerCase().replace(/[^a-z0-9]/g, "_");
     const sendResult = await sendEmailDirectly({
       to: lead.email,
-      subject: pitch.subject,
+      subject: emailSubject,
       body: finalBody,
       attachmentBase64: mockupBase64,
       attachmentName: `${cleanFirm}_workflow_mockup.jpg`
@@ -3740,11 +3904,11 @@ async function startAutoPilotExecution() {
       lead.status = "contacted";
       lead.followUpCount = (lead.followUpCount || 0) + 1;
       lead.lastContactedAt = new Date().toISOString();
-      lead.followUpDueAt = new Date(Date.now() + 3 * 86400000).toISOString();
+      lead.followUpDueAt = nextSchedDays > 0 ? new Date(Date.now() + nextSchedDays * 86400000).toISOString() : null;
 
       if (pillEl) {
         pillEl.className = "queue-status-pill queue-status-done";
-        pillEl.textContent = "Sent ✓";
+        pillEl.textContent = `${stepTitle} ✓`;
       }
       if (itemEl) {
         itemEl.className = "queue-item done";
@@ -4114,6 +4278,11 @@ function setupEventListeners() {
   });
 
   document.getElementById("btnExportData").addEventListener("click", exportData);
+  document.getElementById("btnExportPipelineCsv")?.addEventListener("click", exportPipelineCsv);
+  document.getElementById("btnExportPipelineFromSettings")?.addEventListener("click", () => {
+    closeSettingsModal();
+    exportPipelineCsv();
+  });
   document.getElementById("inputImportFile").addEventListener("change", importData);
   document.getElementById("btnClearAllLeads")?.addEventListener("click", clearAllLeads);
   document.getElementById("btnResetDefaults").addEventListener("click", resetToDefaults);
