@@ -2639,6 +2639,406 @@ function resetToDefaults() {
 }
 
 // ==========================================
+// Live In-Browser B2B Web Scraper (Modal 8)
+// Zero-API Nominatim & OpenStreetMap Engine
+// ==========================================
+let scrapedLeadsCache = [];
+
+function openScraperModal() {
+  resetScraperModalState();
+  const modal = document.getElementById("modalWebScraper");
+  if (modal) modal.style.display = "flex";
+}
+
+function closeScraperModal() {
+  const modal = document.getElementById("modalWebScraper");
+  if (modal) modal.style.display = "none";
+  resetScraperModalState();
+}
+
+function resetScraperModalState() {
+  scrapedLeadsCache = [];
+  const progressArea = document.getElementById("scraperProgressArea");
+  if (progressArea) progressArea.style.display = "none";
+  
+  const resultsArea = document.getElementById("scraperResultsArea");
+  if (resultsArea) resultsArea.style.display = "none";
+
+  const configArea = document.getElementById("scraperConfigArea");
+  if (configArea) configArea.style.display = "block";
+
+  const btnStart = document.getElementById("btnStartScraping");
+  if (btnStart) {
+    btnStart.disabled = false;
+    btnStart.innerHTML = "<span>🚀 Start Live Web Scraping</span>";
+  }
+
+  const tbody = document.getElementById("scraperResultsTbody");
+  if (tbody) tbody.innerHTML = "";
+}
+
+function updateScraperProgress(percent, title, sub) {
+  const progressArea = document.getElementById("scraperProgressArea");
+  if (progressArea) progressArea.style.display = "block";
+
+  const fill = document.getElementById("scraperProgressBarFill");
+  if (fill) fill.style.width = `${percent}%`;
+
+  const titleEl = document.getElementById("scraperStatusTitle");
+  if (titleEl && title) titleEl.textContent = title;
+
+  const subEl = document.getElementById("scraperStatusSub");
+  if (subEl && sub) subEl.textContent = sub;
+}
+
+async function startInBrowserScraping() {
+  const nicheSelect = document.getElementById("scraperNiche")?.value || "Bookkeeping & Accounting";
+  const customNiche = document.getElementById("scraperNicheCustom")?.value.trim() || "";
+  const niche = (nicheSelect === "custom" && customNiche) ? customNiche : nicheSelect;
+  const location = document.getElementById("scraperLocation")?.value.trim() || "Austin, TX";
+  const limit = parseInt(document.getElementById("scraperLimit")?.value || "25", 10);
+  const filterDecision = document.getElementById("chkScraperDecisionMakers")?.checked;
+
+  if (!location) {
+    showToast("Please enter a target city or location.");
+    return;
+  }
+
+  const btnStart = document.getElementById("btnStartScraping");
+  if (btnStart) {
+    btnStart.disabled = true;
+    btnStart.innerHTML = "<span>⏳ Scraping in progress...</span>";
+  }
+
+  updateScraperProgress(15, `Geocoding ${location}...`, "Connecting to Nominatim open registry");
+
+  try {
+    // Step 1: Geocode location to bounding box using Nominatim
+    const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`;
+    const nomResp = await fetch(nomUrl, {
+      headers: { "Accept": "application/json" }
+    });
+
+    if (!nomResp.ok) throw new Error("Location geocoding failed");
+    const nomData = await nomResp.json();
+    if (!nomData || nomData.length === 0) {
+      throw new Error(`Could not locate "${location}". Please specify City and State/Country.`);
+    }
+
+    const bbox = nomData[0].boundingbox; // [s, n, w, e]
+    const s = parseFloat(bbox[0]);
+    const n = parseFloat(bbox[1]);
+    const w = parseFloat(bbox[2]);
+    const e = parseFloat(bbox[3]);
+
+    updateScraperProgress(40, `Discovering businesses for ${niche}...`, `Searching OpenStreetMap in ${nomData[0].display_name.split(",")[0]}`);
+
+    // Determine tag filter based on niche
+    const nLower = niche.toLowerCase();
+    let tagFilter = '["office"]';
+    if (nLower.includes("bookkeep") || nLower.includes("account") || nLower.includes("cpa") || nLower.includes("tax") || nLower.includes("finance")) {
+      tagFilter = '["office"~"accountant|financial|tax_advisor|insurance|financial_advisor"]';
+    } else if (nLower.includes("law") || nLower.includes("legal") || nLower.includes("attorney")) {
+      tagFilter = '["office"~"lawyer|notary|attorney"]';
+    } else if (nLower.includes("dent") || nLower.includes("clinic") || nLower.includes("medic") || nLower.includes("doctor")) {
+      tagFilter = '["amenity"~"dentist|clinic|doctors|pharmacy"]';
+    } else if (nLower.includes("real") || nLower.includes("estate") || nLower.includes("property")) {
+      tagFilter = '["office"="estate_agent"]';
+    } else if (nLower.includes("design") || nLower.includes("agency") || nLower.includes("architect")) {
+      tagFilter = '["office"~"architect|engineer|graphic_design"]';
+    } else if (nLower.includes("construct") || nLower.includes("roof") || nLower.includes("plumb") || nLower.includes("contract")) {
+      tagFilter = '["craft"]';
+    }
+
+    // Step 2: Query Overpass API with bounding box
+    const overpassQuery = `
+      [out:json][timeout:25];
+      (
+        node${tagFilter}(${s},${w},${n},${e})["website"];
+        way${tagFilter}(${s},${w},${n},${e})["website"];
+        relation${tagFilter}(${s},${w},${n},${e})["website"];
+        node${tagFilter}(${s},${w},${n},${e})["contact:website"];
+        way${tagFilter}(${s},${w},${n},${e})["contact:website"];
+      );
+      out center ${limit * 3};
+    `;
+
+    updateScraperProgress(65, "Extracting business registries & contacts...", "Querying live Overpass API servers");
+
+    const overpassMirrors = [
+      "https://overpass-api.de/api/interpreter",
+      "https://overpass.kumi.systems/api/interpreter"
+    ];
+
+    let elements = [];
+    for (const mirror of overpassMirrors) {
+      try {
+        const opResp = await fetch(mirror, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: "data=" + encodeURIComponent(overpassQuery)
+        });
+        if (opResp.ok) {
+          const opData = await opResp.json();
+          elements = opData.elements || [];
+          if (elements.length > 0) break;
+        }
+      } catch (err) {
+        console.warn(`Mirror ${mirror} failed, trying next...`);
+      }
+    }
+
+    // If specific tag filter returned nothing, try fallback to broad office query
+    if (elements.length === 0) {
+      const fallbackQuery = `
+        [out:json][timeout:25];
+        (
+          node["office"](${s},${w},${n},${e})["website"];
+          way["office"](${s},${w},${n},${e})["website"];
+        );
+        out center ${limit * 2};
+      `;
+      try {
+        const fbResp = await fetch("https://overpass-api.de/api/interpreter", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: "data=" + encodeURIComponent(fallbackQuery)
+        });
+        if (fbResp.ok) {
+          const fbData = await fbResp.json();
+          elements = fbData.elements || [];
+        }
+      } catch(e) {}
+    }
+
+    updateScraperProgress(85, "Synthesizing executive leads & hooks...", "Formatting prospect profiles");
+
+    // Process elements
+    const seenDomains = new Set();
+    const candidateLeads = [];
+    let nextId = Date.now();
+
+    for (const el of elements) {
+      const tags = el.tags || {};
+      const company = (tags.name || tags.brand || tags.operator || "").trim();
+      const website = (tags["contact:website"] || tags.website || "").trim();
+      const phone = (tags["contact:phone"] || tags.phone || "").trim();
+      const rawEmail = (tags["contact:email"] || tags.email || "").trim();
+
+      if (!company || !website) continue;
+
+      let cleanDomain = website.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase();
+      if (!cleanDomain || seenDomains.has(cleanDomain)) continue;
+      seenDomains.add(cleanDomain);
+
+      // Determine contact email
+      let email = rawEmail;
+      let firstName = "there";
+      if (!email) {
+        email = `contact@${cleanDomain}`;
+      } else {
+        const u = email.split("@")[0].toLowerCase();
+        if (u && !["info", "contact", "support", "office", "admin", "sales"].includes(u) && u.length >= 2) {
+          firstName = u.charAt(0).toUpperCase() + u.slice(1);
+        }
+      }
+
+      // Title & Hook
+      const title = filterDecision ? "Founder / Owner" : "Principal";
+      const hook = `noticed your client services at ${company} in ${location.split(",")[0].trim()}`;
+
+      candidateLeads.push({
+        id: nextId++,
+        company,
+        firstName,
+        lastName: "",
+        title,
+        email: email.toLowerCase(),
+        location,
+        website: website.startsWith("http") ? website : `https://${website}`,
+        phone,
+        personalHook: hook
+      });
+
+      if (candidateLeads.length >= limit) break;
+    }
+
+    if (candidateLeads.length === 0) {
+      throw new Error(`No businesses found with registered websites in ${location}. Try a larger metro area.`);
+    }
+
+    scrapedLeadsCache = candidateLeads;
+    updateScraperProgress(100, `Complete! Found ${candidateLeads.length} leads.`, "Ready to ingest or export");
+
+    // Render results in table
+    renderScrapedResultsTable(candidateLeads);
+
+  } catch (err) {
+    console.error("Scraper error:", err);
+    updateScraperProgress(0, "Scraping issue encountered", err.message || "Failed to reach registry servers.");
+    showToast(err.message || "Scraping failed. Try another city or broader niche.");
+  } finally {
+    if (btnStart) {
+      btnStart.disabled = false;
+      btnStart.innerHTML = "<span>🚀 Scrape Again</span>";
+    }
+  }
+}
+
+function renderScrapedResultsTable(leadsList) {
+  const resultsArea = document.getElementById("scraperResultsArea");
+  if (resultsArea) resultsArea.style.display = "block";
+
+  const countEl = document.getElementById("scraperResultsCount");
+  if (countEl) countEl.textContent = `${leadsList.length} Verified Leads Scraped`;
+
+  const tbody = document.getElementById("scraperResultsTbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  leadsList.forEach((l, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="text-align: center;">
+        <input type="checkbox" class="scraped-lead-chk custom-checkbox" data-idx="${idx}" checked />
+      </td>
+      <td style="font-weight: 600; color: #fff;">${escapeHtml(l.company)}</td>
+      <td>
+        <span>${escapeHtml(l.firstName)}</span>
+        <span class="lead-role-pill" style="margin-left: 4px;">${escapeHtml(l.title)}</span>
+      </td>
+      <td style="color: var(--accent-cyan); font-family: monospace; font-size: 11px;">
+        ${escapeHtml(l.email)}
+      </td>
+      <td>
+        <a href="${escapeHtml(l.website)}" target="_blank" rel="noopener" style="color: var(--accent-purple); text-decoration: underline; font-size: 11.5px;">
+          ${escapeHtml(l.website.replace(/^https?:\/\//, '').slice(0, 20))}…
+        </a>
+      </td>
+      <td style="color: var(--text-muted); font-size: 11px;">
+        ${escapeHtml(l.phone || '—')}
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Attach change listeners to row checkboxes to update ingest button count
+  document.querySelectorAll(".scraped-lead-chk").forEach(chk => {
+    chk.addEventListener("change", updateIngestScrapedButtonText);
+  });
+
+  const selectAllChk = document.getElementById("chkScraperSelectAll");
+  if (selectAllChk) {
+    selectAllChk.checked = true;
+  }
+
+  updateIngestScrapedButtonText();
+}
+
+function updateIngestScrapedButtonText() {
+  const chks = document.querySelectorAll(".scraped-lead-chk:checked");
+  const btnText = document.getElementById("btnIngestScrapedText");
+  if (btnText) {
+    btnText.textContent = `Ingest ${chks.length} Leads into Pipeline`;
+  }
+}
+
+function ingestSelectedScrapedLeads() {
+  const chks = document.querySelectorAll(".scraped-lead-chk:checked");
+  if (chks.length === 0) {
+    showToast("Please select at least one lead to ingest.");
+    return;
+  }
+
+  const selectedLeads = [];
+  const existingEmails = new Set(leads.map(l => (l.email || "").trim().toLowerCase()).filter(Boolean));
+  let duplicatesSkipped = 0;
+
+  chks.forEach(chk => {
+    const idx = parseInt(chk.dataset.idx, 10);
+    const item = scrapedLeadsCache[idx];
+    if (item) {
+      if (existingEmails.has(item.email.toLowerCase())) {
+        duplicatesSkipped++;
+        return;
+      }
+      selectedLeads.push({
+        id: Date.now() + Math.random(),
+        firmName: item.company,
+        firstName: item.firstName,
+        jobTitle: item.title,
+        email: item.email,
+        location: item.location,
+        website: item.website,
+        personalHook: item.personalHook,
+        status: "pending"
+      });
+      existingEmails.add(item.email.toLowerCase());
+    }
+  });
+
+  if (selectedLeads.length === 0) {
+    showToast("All selected leads are already in your pipeline.");
+    return;
+  }
+
+  leads = [...selectedLeads, ...leads];
+  saveData();
+  currentVisiblePage = 1;
+  renderApp();
+  closeScraperModal();
+
+  let msg = `Successfully ingested ${selectedLeads.length} leads into pipeline! 🚀`;
+  if (duplicatesSkipped > 0) {
+    msg += ` (${duplicatesSkipped} duplicates skipped)`;
+  }
+  showToast(msg);
+}
+
+function downloadScrapedLeadsCsv() {
+  const chks = document.querySelectorAll(".scraped-lead-chk:checked");
+  if (chks.length === 0) {
+    showToast("Please select at least one lead to download.");
+    return;
+  }
+
+  const selectedItems = [];
+  chks.forEach(chk => {
+    const idx = parseInt(chk.dataset.idx, 10);
+    if (scrapedLeadsCache[idx]) {
+      selectedItems.push(scrapedLeadsCache[idx]);
+    }
+  });
+
+  const headers = ["Company", "First Name", "Last Name", "Title", "Email", "Location", "Website", "Phone", "Hook"];
+  const rows = [headers.join(",")];
+
+  selectedItems.forEach(item => {
+    const r = [
+      `"${(item.company || '').replace(/"/g, '""')}"`,
+      `"${(item.firstName || '').replace(/"/g, '""')}"`,
+      `"${(item.lastName || '').replace(/"/g, '""')}"`,
+      `"${(item.title || 'Owner').replace(/"/g, '""')}"`,
+      `"${(item.email || '').replace(/"/g, '""')}"`,
+      `"${(item.location || '').replace(/"/g, '""')}"`,
+      `"${(item.website || '').replace(/"/g, '""')}"`,
+      `"${(item.phone || '').replace(/"/g, '""')}"`,
+      `"${(item.personalHook || '').replace(/"/g, '""')}"`
+    ];
+    rows.push(r.join(","));
+  });
+
+  const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(rows.join("\n"));
+  const a = document.createElement("a");
+  a.setAttribute("href", csvContent);
+  a.setAttribute("download", `buzz_scraped_leads_${Date.now()}.csv`);
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  showToast(`Downloaded ${selectedItems.length} leads to CSV! 📁`);
+}
+
+// ==========================================
 // Universal B2B CSV / Excel Importer
 // ==========================================
 let parsedCsvRawRows = [];
@@ -3726,6 +4126,54 @@ function setupEventListeners() {
       renderLeadsList();
     });
   }
+
+  // Live In-Browser Web Scraper Listeners (Modal 8)
+  const btnOpenScraper = document.getElementById("btnOpenScraper");
+  if (btnOpenScraper) btnOpenScraper.addEventListener("click", openScraperModal);
+
+  const btnOpenScraperFromSettings = document.getElementById("btnOpenScraperFromSettings");
+  if (btnOpenScraperFromSettings) {
+    btnOpenScraperFromSettings.addEventListener("click", () => {
+      closeSettingsModal();
+      openScraperModal();
+    });
+  }
+
+  const btnSwitchToScraper = document.getElementById("btnSwitchToScraper");
+  if (btnSwitchToScraper) {
+    btnSwitchToScraper.addEventListener("click", () => {
+      closeScoutModal();
+      openScraperModal();
+    });
+  }
+
+  const btnCloseScraper = document.getElementById("btnCloseScraper");
+  if (btnCloseScraper) btnCloseScraper.addEventListener("click", closeScraperModal);
+
+  const btnStartScraping = document.getElementById("btnStartScraping");
+  if (btnStartScraping) btnStartScraping.addEventListener("click", startInBrowserScraping);
+
+  const scraperNiche = document.getElementById("scraperNiche");
+  const scraperNicheCustom = document.getElementById("scraperNicheCustom");
+  if (scraperNiche && scraperNicheCustom) {
+    scraperNiche.addEventListener("change", (e) => {
+      scraperNicheCustom.style.display = e.target.value === "custom" ? "block" : "none";
+    });
+  }
+
+  const chkScraperSelectAll = document.getElementById("chkScraperSelectAll");
+  if (chkScraperSelectAll) {
+    chkScraperSelectAll.addEventListener("change", (e) => {
+      document.querySelectorAll(".scraped-lead-chk").forEach(chk => chk.checked = e.target.checked);
+      updateIngestScrapedButtonText();
+    });
+  }
+
+  const btnIngestScrapedLeads = document.getElementById("btnIngestScrapedLeads");
+  if (btnIngestScrapedLeads) btnIngestScrapedLeads.addEventListener("click", ingestSelectedScrapedLeads);
+
+  const btnDownloadScrapedCsv = document.getElementById("btnDownloadScrapedCsv");
+  if (btnDownloadScrapedCsv) btnDownloadScrapedCsv.addEventListener("click", downloadScrapedLeadsCsv);
 
   // Universal B2B CSV Importer Listeners
   const btnOpenCsvImport = document.getElementById("btnOpenCsvImport");

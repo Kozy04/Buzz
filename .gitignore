@@ -23,3 +23,6 @@ Thumbs.db
 *.lock
 *-journal
 *.log
+__pycache__/
+*.py[cod]
+.cache/

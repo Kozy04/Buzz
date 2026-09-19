@@ -21,8 +21,8 @@
    "tool_data" : {
       "cache_path" : "resources/.cache",
       "created_on" : "2026-Sep-17 10:33:36",
-      "last_modified_time" : "2026-Sep-17 12:30:01",
-      "link_extract_choice" : false,
+      "last_modified_time" : "2026-Sep-18 09:32:22",
+      "link_extract_choice" : true,
       "link_notification_preference" : true
    }
 }
