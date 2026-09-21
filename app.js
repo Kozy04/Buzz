@@ -4438,6 +4438,576 @@ function setupEventListeners() {
       }
     });
   });
+
+  // Copilot Event Listeners
+  document.getElementById("btnOpenCopilotHeader")?.addEventListener("click", openCopilotDrawer);
+  document.getElementById("btnOpenCopilotFab")?.addEventListener("click", openCopilotDrawer);
+  document.getElementById("btnCloseCopilot")?.addEventListener("click", closeCopilotDrawer);
+  document.getElementById("btnClearCopilotChat")?.addEventListener("click", clearCopilotChat);
+
+  const btnCopilotSend = document.getElementById("btnCopilotSend");
+  if (btnCopilotSend) {
+    btnCopilotSend.addEventListener("click", handleCopilotSend);
+  }
+
+  const copilotInput = document.getElementById("copilotInput");
+  if (copilotInput) {
+    copilotInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleCopilotSend();
+      }
+    });
+  }
+
+  // Quick Action Chips in Copilot
+  document.querySelectorAll(".copilot-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const prompt = chip.dataset.prompt;
+      if (prompt) {
+        const inputEl = document.getElementById("copilotInput");
+        if (inputEl) inputEl.value = prompt;
+        handleCopilotSend();
+      }
+    });
+  });
+}
+
+// ==========================================
+// Buzz Copilot AI Assistant Engine (Modal 9)
+// ==========================================
+let copilotHistory = [];
+let copilotIsBusy = false;
+
+const COPILOT_SYSTEM_PROMPT = `You are Buzz Copilot, the elite built-in AI assistant and outreach partner for Buzz Outreach PWA.
+Your mission is twofold:
+1. Answer ANY user questions about Buzz (features, architecture, email setup, cPanel, Gmail webhook, AI Scout, scraper, Auto-Pilot, Smart Cadence, visual mockups, CRM deal tracking, CSV import/export).
+2. Act as an autonomous operator: help the user set up their business profile, configure their email bridge, find targeted leads, update CRM records, and launch cold outreach campaigns using your available tools.
+
+BUZZ SYSTEM KNOWLEDGE:
+- What Buzz is: A high-performance, mobile-first Progressive Web App (PWA) designed for automated B2B cold email outreach and pipeline management. Stored locally in IndexedDB (holds 50,000+ leads with 60fps virtualization).
+- Business Identity & Profiles: Users can configure their Business Name, Sender Name & Title, Product URL, Value Proposition, and Core Offer. Presets include SmartRename AI, Web Design Agency, SEO Agency, Consulting, or Custom.
+- Email Dispatch Methods:
+  1. Method 1: cPanel PHP Bridge (buzz-send.php uploaded to public_html). Sends directly from custom domain (you@yourdomain.com), auto-attaches 1280x720 branded visual mockups, zero third-party subscription fees.
+  2. Method 2: Google Apps Script Webhook. 100% free serverless webhook deployed to script.google.com that sends via Gmail/Workspace alias.
+  3. Method 3: Default Mail App (mailto:).
+- Lead Acquisition:
+  1. Live In-Browser Web Scraper: Zero API keys required. Uses OpenStreetMap & Nominatim APIs to extract active local businesses with websites, phones, and decision-maker roles in seconds.
+  2. AI Lead Scout: Uses Google Gemini with live Google Search Grounding to find authentic local businesses in any Country, State, and City/LGA.
+  3. Universal CSV/Excel Importer: Seamlessly imports Apollo.io, LinkedIn Sales Navigator, ZoomInfo, or custom spreadsheets with smart column mapping, duplicate detection, and executive filtering.
+- Outreach Formulas & Cadence:
+  - 5-step cold email cadence formulas: 1. Initial Pitch (Receipt/CPA hook), 2. Day 3 Bump, 3. Day 7 Proof / Case Study, 4. Day 14 Breakup / Close loop.
+  - Smart Cadence in Auto-Pilot: Automatically detects each lead's send history (0 sends -> Pitch, 1 send -> Bump, 2 sends -> Proof, 3+ sends -> Breakup) and schedules the next cadence date.
+- Visual Pitch Mockups: Google Imagen 3 generated visuals: Before & After Split Screen, 30-Sec Video Demo Player card, or Client SaaS Portal Dashboard.
+- Lightweight CRM: Statuses (Pending, Contacted, Sample Sent, Won), Deal Value ($) tracking with dynamic revenue KPI calculations, Notes & Activity Log.
+- Data Portability: 1-click RFC 4180-compliant CSV export with UTF-8 BOM for Microsoft Excel & Google Sheets.
+
+GUIDELINES FOR RESPONDING:
+- Be helpful, conversational, punchy, and confident. Use clean markdown (bolding, bullet points, code snippets).
+- When asked to perform an action (e.g. scrape leads, update settings, run outreach, check stats, export CSV), ALWAYS use the appropriate tool function.
+- If the user asks for setup help, guide them step-by-step or ask for their business details to set them up automatically.
+- If the user has questions about cPanel or Gmail setup, provide exact step-by-step guidance.`;
+
+const COPILOT_TOOLS_DECLARATIONS = [
+  {
+    name: "get_pipeline_stats",
+    description: "Get real-time statistics of the user's active outreach pipeline (total leads, contacted, won deals, won revenue $, and follow-ups due).",
+    parameters: { type: "OBJECT", properties: {} }
+  },
+  {
+    name: "set_business_profile",
+    description: "Configure or update the user's active business/campaign profile in Settings (business name, sender name, product URL, value proposition, and core offer).",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        businessName: { type: "STRING", description: "Name of the business or software" },
+        senderName: { type: "STRING", description: "Name and title of the sender" },
+        productUrl: { type: "STRING", description: "Website URL" },
+        valueProp: { type: "STRING", description: "Value proposition / what problem is solved" },
+        offer: { type: "STRING", description: "Core offer or call-to-action" }
+      }
+    }
+  },
+  {
+    name: "set_email_bridge",
+    description: "Configure the email dispatch bridge settings (cPanel PHP bridge or Google Apps Script webhook).",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        dispatchEngine: { type: "STRING", enum: ["cpanel", "googleScript", "mailto"], description: "Gateway method" },
+        dispatchUrl: { type: "STRING", description: "URL of buzz-send.php or Google Apps Script" },
+        dispatchFromEmail: { type: "STRING", description: "Sender email address" },
+        dispatchFromName: { type: "STRING", description: "Sender name" }
+      }
+    }
+  },
+  {
+    name: "test_dispatch_connection",
+    description: "Test the email bridge connection by sending a verified test email with a mockup attachment to the sender's email.",
+    parameters: { type: "OBJECT", properties: {} }
+  },
+  {
+    name: "scrape_leads",
+    description: "Scrape verified local businesses, websites, and decision-maker contacts in a target niche and city/metro directly into the pipeline.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        niche: { type: "STRING", description: "Target industry or niche (e.g. Dental Clinics, Bookkeeping, Law Firms, HVAC)" },
+        location: { type: "STRING", description: "Target city and state/country (e.g. Austin, TX; Miami, FL; London, UK)" },
+        limit: { type: "INTEGER", description: "Number of leads to scrape (default 20, max 50)" },
+        prioritizeDecisionMakers: { type: "BOOLEAN", description: "Whether to prioritize Founders, Owners, CEOs" }
+      },
+      required: ["niche", "location"]
+    }
+  },
+  {
+    name: "run_autopilot",
+    description: "Launch an automated Auto-Pilot cold email outreach campaign across pending or due leads.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        strategy: { type: "STRING", enum: ["smart", "fixed"], description: "Strategy: 'smart' for auto-detecting sequence step, 'fixed' for initial pitch" },
+        filter: { type: "STRING", enum: ["pending", "followups", "all"], description: "Which leads to target" }
+      }
+    }
+  },
+  {
+    name: "update_lead",
+    description: "Update a lead in the pipeline (set status to pending/contacted/sample/won, add deal value $, or add notes).",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        leadIdOrName: { type: "STRING", description: "Lead ID or company/contact name to match" },
+        status: { type: "STRING", enum: ["pending", "contacted", "sample", "won"], description: "New pipeline status" },
+        dealValue: { type: "NUMBER", description: "Closed deal value in dollars" },
+        notes: { type: "STRING", description: "Notes or activity log" }
+      },
+      required: ["leadIdOrName"]
+    }
+  },
+  {
+    name: "export_pipeline_csv",
+    description: "Export the active pipeline or specific leads to an Excel/Google Sheets compatible CSV.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        scope: { type: "STRING", enum: ["all", "won", "contacted", "followups", "selected"], description: "Export scope" }
+      }
+    }
+  }
+];
+
+function openCopilotModal() {
+  const modal = document.getElementById("modalCopilot") || document.getElementById("drawerCopilot");
+  if (!modal) return;
+  modal.style.display = "flex";
+
+  if (copilotHistory.length === 0) {
+    appendCopilotMessage("bot", `👋 **Hey there! I'm Buzz Copilot**, your AI outreach partner.
+
+I can help you:
+- **Set up everything:** Configure your Business Profile, cPanel bridge, or Gemini key.
+- **Find Leads:** Scrape local businesses with verified decision-makers.
+- **Run Outreach:** Dispatch high-converting cold email sequences with branded mockups.
+- **Answer Any Question:** Ask me anything about how Buzz works!
+
+How can I help you today? You can tap a quick action above or type below.`);
+  }
+
+  const inputEl = document.getElementById("copilotInput");
+  if (inputEl) inputEl.focus();
+}
+
+const openCopilotDrawer = openCopilotModal;
+
+function closeCopilotModal() {
+  const modal = document.getElementById("modalCopilot") || document.getElementById("drawerCopilot");
+  if (modal) modal.style.display = "none";
+}
+
+const closeCopilotDrawer = closeCopilotModal;
+
+function clearCopilotChat() {
+  copilotHistory = [];
+  const container = document.getElementById("copilotMessages");
+  if (container) container.innerHTML = "";
+  openCopilotModal();
+  showToast("Copilot chat cleared 🤖");
+}
+
+// Expose globally on window for inline onclick reliability
+window.openCopilotModal = openCopilotModal;
+window.openCopilotDrawer = openCopilotDrawer;
+window.closeCopilotModal = closeCopilotModal;
+window.closeCopilotDrawer = closeCopilotDrawer;
+window.clearCopilotChat = clearCopilotChat;
+window.handleCopilotSend = handleCopilotSend;
+
+function setCopilotTyping(isTyping, statusText = "Copilot is thinking...") {
+  const indicator = document.getElementById("copilotTypingIndicator");
+  const textEl = document.getElementById("copilotStatusText");
+  if (!indicator) return;
+  indicator.style.display = isTyping ? "flex" : "none";
+  if (textEl && statusText) textEl.textContent = statusText;
+
+  const container = document.getElementById("copilotMessages");
+  if (container && isTyping) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function appendCopilotMessage(role, text, toolBadge = null) {
+  copilotHistory.push({ role, text, toolBadge, timestamp: Date.now() });
+  const container = document.getElementById("copilotMessages");
+  if (!container) return;
+
+  const msgDiv = document.createElement("div");
+  msgDiv.className = `copilot-msg ${role === "user" ? "copilot-msg-user" : "copilot-msg-bot"}`;
+
+  let html = "";
+  if (toolBadge) {
+    html += `<div class="copilot-tool-badge">⚡ ${escapeHtml(toolBadge)}</div>`;
+  }
+  html += formatCopilotMarkdown(text);
+  msgDiv.innerHTML = html;
+
+  container.appendChild(msgDiv);
+  container.scrollTop = container.scrollHeight;
+}
+
+function formatCopilotMarkdown(rawText) {
+  if (!rawText) return "";
+  let formatted = escapeHtml(rawText);
+
+  // Bold
+  formatted = formatted.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+  // Italic
+  formatted = formatted.replace(/\*(.*?)\*/g, "<em>$1</em>");
+  // Inline code
+  formatted = formatted.replace(/`([^`]+)`/g, "<code>$1</code>");
+  // Unordered list items
+  formatted = formatted.replace(/(?:^|\n)[-*]\s+(.+)/g, "<br/>• $1");
+  // Ordered list items
+  formatted = formatted.replace(/(?:^|\n)(\d+)\.\s+(.+)/g, "<br/>$1. $2");
+  // Paragraph line breaks
+  formatted = formatted.replace(/\n\n+/g, "<br/><br/>");
+  formatted = formatted.replace(/\n/g, "<br/>");
+
+  return formatted;
+}
+
+async function handleCopilotSend() {
+  if (copilotIsBusy) return;
+  const inputEl = document.getElementById("copilotInput");
+  if (!inputEl) return;
+  const query = inputEl.value.trim();
+  if (!query) return;
+
+  inputEl.value = "";
+  appendCopilotMessage("user", query);
+
+  const apiKey = settings.geminiApiKey?.trim();
+  if (!apiKey) {
+    // Graceful offline fallback
+    setCopilotTyping(true, "Searching Buzz knowledge base...");
+    await new Promise(r => setTimeout(r, 450));
+    setCopilotTyping(false);
+    const offlineReply = getCopilotOfflineAnswer(query);
+    appendCopilotMessage("bot", offlineReply);
+    return;
+  }
+
+  copilotIsBusy = true;
+  setCopilotTyping(true, "Copilot is analyzing...");
+
+  try {
+    // Build multi-turn contents for Gemini
+    const contents = [];
+
+    // Include recent history (last 8 turns)
+    const recentHistory = copilotHistory.slice(-8);
+    for (const h of recentHistory) {
+      if (h.role === "user") {
+        contents.push({ role: "user", parts: [{ text: h.text }] });
+      } else if (h.role === "bot") {
+        contents.push({ role: "model", parts: [{ text: h.text }] });
+      }
+    }
+
+    const payload = {
+      systemInstruction: { parts: [{ text: COPILOT_SYSTEM_PROMPT }] },
+      contents: contents,
+      tools: [{ functionDeclarations: COPILOT_TOOLS_DECLARATIONS }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1024,
+        thinkingConfig: { thinkingBudget: 0 }
+      }
+    };
+
+    let response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok && response.status === 400) {
+      delete payload.generationConfig.thinkingConfig;
+      response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error (HTTP ${response.status})`);
+    }
+
+    const data = await response.json();
+    const candidate = data.candidates?.[0];
+    const candidateParts = candidate?.content?.parts || [];
+
+    // Check for Function Call
+    const functionCallPart = candidateParts.find(p => p.functionCall);
+    if (functionCallPart) {
+      const call = functionCallPart.functionCall;
+      setCopilotTyping(true, `Executing tool: ${call.name}...`);
+
+      const toolResult = await executeCopilotTool(call.name, call.args || {});
+
+      // Send function response back to Gemini for conversational final response
+      contents.push({ role: "model", parts: [{ functionCall: call }] });
+      contents.push({
+        role: "user",
+        parts: [{
+          functionResponse: {
+            name: call.name,
+            response: toolResult
+          }
+        }]
+      });
+
+      const secondResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (secondResp.ok) {
+        const secondData = await secondResp.json();
+        const secondParts = secondData.candidates?.[0]?.content?.parts || [];
+        const botText = secondParts.map(p => p.text || "").join("").trim() || "Action executed successfully!";
+        setCopilotTyping(false);
+        appendCopilotMessage("bot", botText, `Executed: ${call.name}`);
+      } else {
+        setCopilotTyping(false);
+        appendCopilotMessage("bot", `✓ Action completed: **${call.name}**\n\nResult:\n\`\`\`json\n${JSON.stringify(toolResult, null, 2)}\n\`\`\``, `Executed: ${call.name}`);
+      }
+    } else {
+      // Normal conversational text reply
+      const botText = candidateParts.map(p => p.text || "").join("").trim() || "I'm here to help!";
+      setCopilotTyping(false);
+      appendCopilotMessage("bot", botText);
+    }
+  } catch (err) {
+    console.error("Copilot error:", err);
+    setCopilotTyping(false);
+    appendCopilotMessage("bot", `⚠️ **Copilot encountered an error**: ${err.message}\n\nPlease verify your Gemini API key in Settings (⚙️) or try again.`);
+  } finally {
+    copilotIsBusy = false;
+  }
+}
+
+// Autonomous Tool Execution Engine
+async function executeCopilotTool(name, args) {
+  try {
+    switch (name) {
+      case "get_pipeline_stats": {
+        const wonLeads = leads.filter(l => l.status === "won");
+        const wonRev = wonLeads.reduce((s, l) => s + (Number(l.dealValue) || 0), 0);
+        const fuDue = leads.filter(l => l.status === "contacted" && isFollowUpDue(l)).length;
+        return {
+          totalLeads: leads.length,
+          contacted: leads.filter(l => l.status === "contacted").length,
+          sampleSent: leads.filter(l => l.status === "sample").length,
+          wonCount: wonLeads.length,
+          totalRevenueWon: wonRev,
+          pending: leads.filter(l => l.status === "pending").length,
+          followupsDueToday: fuDue
+        };
+      }
+
+      case "set_business_profile": {
+        if (args.businessName) settings.businessName = args.businessName;
+        if (args.senderName) settings.senderName = args.senderName;
+        if (args.productUrl) settings.productUrl = args.productUrl;
+        if (args.valueProp) settings.valueProp = args.valueProp;
+        if (args.offer) settings.offer = args.offer;
+        saveSettings();
+        return { success: true, updated: args };
+      }
+
+      case "set_email_bridge": {
+        if (args.dispatchEngine) settings.dispatchEngine = args.dispatchEngine;
+        if (args.dispatchUrl) settings.dispatchUrl = args.dispatchUrl;
+        if (args.dispatchFromEmail) settings.dispatchFromEmail = args.dispatchFromEmail;
+        if (args.dispatchFromName) settings.dispatchFromName = args.dispatchFromName;
+        saveSettings();
+        return { success: true, engine: settings.dispatchEngine, url: settings.dispatchUrl };
+      }
+
+      case "test_dispatch_connection": {
+        setTimeout(() => testDirectDispatch(), 200);
+        return { success: true, message: "Direct dispatch test triggered! Check your inbox." };
+      }
+
+      case "scrape_leads": {
+        const niche = args.niche || "Bookkeeping & Accounting";
+        const location = args.location || "Austin, TX";
+        const limit = args.limit || 20;
+
+        // Set inputs in scraper modal
+        const locInput = document.getElementById("scraperLocation");
+        if (locInput) locInput.value = location;
+        const limSelect = document.getElementById("scraperLimit");
+        if (limSelect) limSelect.value = String(limit);
+
+        // Run scraper engine directly
+        await startInBrowserScraping();
+        // Ingest results directly into pipeline
+        ingestSelectedScrapedLeads();
+        closeScraperModal();
+
+        return { success: true, scrapedCount: scrapedLeadsCache.length, niche, location };
+      }
+
+      case "run_autopilot": {
+        if (args.strategy) {
+          const stratEl = document.querySelector(`input[name="autoPilotStrategy"][value="${args.strategy}"]`);
+          if (stratEl) stratEl.checked = true;
+        }
+        setTimeout(() => openAutoPilotModal(), 300);
+        return { success: true, strategy: args.strategy || "smart", message: "Auto-Pilot campaign launched" };
+      }
+
+      case "update_lead": {
+        const targetStr = (args.leadIdOrName || "").toLowerCase();
+        const lead = leads.find(l => 
+          String(l.id) === targetStr || 
+          (l.firmName && l.firmName.toLowerCase().includes(targetStr)) ||
+          (l.firstName && l.firstName.toLowerCase().includes(targetStr))
+        );
+
+        if (!lead) {
+          return { success: false, message: `Could not locate prospect matching "${args.leadIdOrName}"` };
+        }
+
+        if (args.status) lead.status = args.status;
+        if (args.dealValue !== undefined) lead.dealValue = Number(args.dealValue) || 0;
+        if (args.notes) lead.notes = args.notes;
+
+        saveData();
+        renderApp();
+        return { success: true, lead: { firmName: lead.firmName, status: lead.status, dealValue: lead.dealValue, notes: lead.notes } };
+      }
+
+      case "export_pipeline_csv": {
+        if (args.scope && args.scope !== "all") {
+          currentFilter = args.scope;
+        }
+        setTimeout(() => exportPipelineCsv(), 200);
+        return { success: true, scope: args.scope || "all", message: "CSV export initiated" };
+      }
+
+      default:
+        return { error: `Unknown tool: ${name}` };
+    }
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+// Built-in Offline FAQ Engine (Works without API key)
+function getCopilotOfflineAnswer(query) {
+  const q = query.toLowerCase();
+
+  if (q.includes("cpanel") || q.includes("bridge") || q.includes("buzz-send")) {
+    return `### ✉️ Setting Up the cPanel Email Bridge
+
+Buzz allows you to send cold emails directly from your domain email (e.g. \`you@yourdomain.com\`) with auto-attached 1280x720 mockups.
+
+**3-Step Setup:**
+1. **Download \`buzz-send.php\`:** Click the download button in **Settings (⚙️)** or grab it from the repository.
+2. **Upload to cPanel:** Open your cPanel **File Manager**, navigate into **\`public_html\`**, and upload \`buzz-send.php\`.
+3. **Save in Buzz:** In Buzz **Settings (⚙️)**:
+   - Gateway Method: \`Method 1: cPanel PHP Bridge\`
+   - Bridge URL: \`https://yourdomain.com/buzz-send.php\`
+   - From Email: \`you@yourdomain.com\`
+   - Click **"🧪 Test Direct Dispatch"**!`;
+  }
+
+  if (q.includes("gmail") || q.includes("google script") || q.includes("apps script")) {
+    return `### 📬 Setting Up Google Apps Script (Gmail Webhook)
+
+Send emails directly through your free Gmail or Google Workspace account without a cPanel server.
+
+**4-Step Setup:**
+1. Open [script.google.com](https://script.google.com) and click **+ New Project**.
+2. Copy the Google Script code from Buzz **Settings (⚙️)** and paste it into the editor.
+3. Click **Deploy ➔ New deployment ➔ Web app**. Set *Execute as: Me* and *Who has access: Anyone*.
+4. Copy the generated Web App URL and paste it into Buzz **Settings (⚙️)** under Gateway Method 2!`;
+  }
+
+  if (q.includes("smart cadence") || q.includes("cadence") || q.includes("followup") || q.includes("follow-up")) {
+    return `### ⚡ What is Smart Cadence?
+
+80% of sales happen on the follow-up. Buzz's **Smart Cadence engine** automatically tracks every lead's contact history:
+- **0 Sends (Pending):** Sends **Step 1: Initial Hook / Pitch** (schedules +3 days).
+- **1 Send (Contacted):** Automatically sends **Step 2: Day 3 Bump** (schedules +4 days).
+- **2 Sends:** Automatically sends **Step 3: Day 7 Case Study Proof** (schedules +7 days).
+- **3 Sends:** Sends **Step 4: Day 14 Breakup / Close loop**.
+
+When you run **⚡ Auto-Pilot**, it detects which step each lead is on and sends the exact right message!`;
+  }
+
+  if (q.includes("scrape") || q.includes("finder") || q.includes("leads") || q.includes("nominatim")) {
+    return `### 🕷️ In-Browser Lead Scraper vs 🔍 AI Scout
+
+Buzz gives you two powerful ways to discover leads:
+1. **🕷️ Live Web Scraper (Zero API Key):** Uses OpenStreetMap & Nominatim to extract local businesses, websites, phone numbers, and decision-maker roles in your target city in seconds.
+2. **🔍 AI Scout (Gemini Search Grounding):** Uses Google Gemini to search Google live for verified business owners across any Country, State, and LGA/City.
+
+You can also import thousands of leads from Apollo.io or LinkedIn using **📥 Import CSV**!`;
+  }
+
+  if (q.includes("mockup") || q.includes("imagen") || q.includes("visual")) {
+    return `### 🎨 Visual Pitch Mockups
+
+Buzz generates custom branded before/after split screens, 30-sec video demo preview cards, and client SaaS portal dashboards using Google Imagen 3.
+
+In **Draft & Send**, you can preview and download the mockup. In **⚡ Auto-Pilot**, mockups are automatically rendered and attached to every email!`;
+  }
+
+  if (q.includes("setup") || q.includes("start") || q.includes("how to")) {
+    return `### 🚀 Quick Start Guide for Buzz
+
+1. **Add Google Gemini API Key:** Open **Settings (⚙️)** and paste your free key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+2. **Configure Email Dispatch:** Upload \`buzz-send.php\` to your cPanel or deploy the Google Apps Script webhook.
+3. **Get Leads:** Click **🕷️ Scrape Leads** or **📥 Import CSV**.
+4. **Launch Outreach:** Select your leads and click **⚡ Run Auto-Pilot Campaign**!
+
+To enable autonomous actions in this chat, please add your Gemini API Key in **Settings (⚙️)**.`;
+  }
+
+  return `I am **Buzz Copilot**! To enable full autonomous tool execution (scraping leads, running Auto-Pilot, updating settings directly from chat), please add your free **Google Gemini API Key** in **Settings (⚙️)**.
+
+In the meantime, feel free to ask me any questions about:
+- **cPanel PHP Bridge setup**
+- **Gmail Webhook deployment**
+- **Smart Cadence follow-up rules**
+- **In-browser lead scraping**
+- **Universal CSV importing & exporting**`;
 }
 
 // Start
