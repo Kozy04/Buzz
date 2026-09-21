@@ -4706,9 +4706,28 @@ async function handleCopilotSend() {
   inputEl.value = "";
   appendCopilotMessage("user", query);
 
-  const apiKey = settings.geminiApiKey?.trim();
+  // Check if user provided/pasted a Gemini API Key directly in chat
+  const apiKeyMatch = query.match(/AIzaSy[a-zA-Z0-9_-]{33}/);
+  if (apiKeyMatch) {
+    const extractedKey = apiKeyMatch[0];
+    settings.geminiApiKey = extractedKey;
+    saveSettings();
+    appendCopilotMessage("bot", `✨ **Gemini API Key Detected & Activated!**
+    
+Buzz Copilot is now connected to **Gemini 2.5 Flash** with live autonomous tool execution.
+
+You can now:
+- Ask me complex questions with full AI reasoning
+- Tell me: *"Scrape 20 leads in Austin"* or *"Run Auto-Pilot"*
+- Have me update your business offer or pipeline records
+
+What would you like to do next?`);
+    return;
+  }
+
+  let apiKey = settings.geminiApiKey?.trim();
   if (!apiKey) {
-    // Graceful offline fallback
+    // Graceful offline fallback with rich knowledge base
     setCopilotTyping(true, "Searching Buzz knowledge base...");
     await new Promise(r => setTimeout(r, 450));
     setCopilotTyping(false);
@@ -4928,10 +4947,37 @@ async function executeCopilotTool(name, args) {
   }
 }
 
-// Built-in Offline FAQ Engine (Works without API key)
+// Built-in Offline Knowledge Engine (Works without API key)
 function getCopilotOfflineAnswer(query) {
   const q = query.toLowerCase();
 
+  // 1. Non-Technical / Plug-and-Play Setup
+  if (q.includes("non technical") || q.includes("non-technical") || q.includes("plug and play") || q.includes("plug-and-play") || q.includes("beginner") || q.includes("easy") || q.includes("simple") || q.includes("no code") || q.includes("nocode") || q.includes("no-code")) {
+    return `### 🔌 100% Plug-and-Play Setup (Zero Technical Skills Required)
+
+Buzz is specifically built so that **anyone can start landing clients immediately without knowing how to code or manage servers**:
+
+1. **Pre-Loaded Leads & Templates (Instant Start):**
+   - The moment you open Buzz, your pipeline is already pre-populated with qualified B2B leads and battle-tested cold email templates. You don't have to configure anything to see how it works.
+
+2. **Zero-Key In-Browser Lead Scraper:**
+   - Tap **🕷️ Scrape Leads** in the toolbar.
+   - Pick your niche (e.g. *Dental Clinics* or *Bookkeeping*) and enter your city (e.g. *Austin* or *London*).
+   - Click **"Start Live Scraping"**. It pulls real local businesses, websites, phone numbers, and decision-maker roles directly from OpenStreetMap. **No API keys or credit cards needed!**
+
+3. **1-Click Native Email Sending (Zero Server Setup):**
+   - You don't need a cPanel server or Google Apps Script.
+   - On any prospect card, tap **"Draft & Send"** ➔ **"🚀 Launch Mail App"**.
+   - Buzz automatically opens your default email software (Apple Mail, Outlook, or Gmail app on phone/desktop) with the recipient email, subject line, and personalized pitch already filled in. Just review and hit Send!
+
+4. **1-Click CSV Drag-and-Drop:**
+   - Have a list of leads from Apollo, LinkedIn, or Google Sheets? Just drop the file into **📥 Import CSV**. Buzz auto-maps the columns for you.
+
+5. **Optional 30-Second AI Upgrade:**
+   - If you want automated AI Smart Drafting or background dispatching, you only need to grab a free key from [Google AI Studio](https://aistudio.google.com/app/apikey) and **paste it directly into this chat**. I will activate Gemini 2.5 Flash for you automatically!`;
+  }
+
+  // 2. cPanel PHP Bridge
   if (q.includes("cpanel") || q.includes("bridge") || q.includes("buzz-send")) {
     return `### ✉️ Setting Up the cPanel Email Bridge
 
@@ -4947,6 +4993,7 @@ Buzz allows you to send cold emails directly from your domain email (e.g. \`you@
    - Click **"🧪 Test Direct Dispatch"**!`;
   }
 
+  // 3. Gmail Webhook / Google Apps Script
   if (q.includes("gmail") || q.includes("google script") || q.includes("apps script")) {
     return `### 📬 Setting Up Google Apps Script (Gmail Webhook)
 
@@ -4959,6 +5006,7 @@ Send emails directly through your free Gmail or Google Workspace account without
 4. Copy the generated Web App URL and paste it into Buzz **Settings (⚙️)** under Gateway Method 2!`;
   }
 
+  // 4. Smart Cadence Follow-Up Engine
   if (q.includes("smart cadence") || q.includes("cadence") || q.includes("followup") || q.includes("follow-up")) {
     return `### ⚡ What is Smart Cadence?
 
@@ -4971,6 +5019,7 @@ Send emails directly through your free Gmail or Google Workspace account without
 When you run **⚡ Auto-Pilot**, it detects which step each lead is on and sends the exact right message!`;
   }
 
+  // 5. Lead Scraping & AI Scout
   if (q.includes("scrape") || q.includes("finder") || q.includes("leads") || q.includes("nominatim")) {
     return `### 🕷️ In-Browser Lead Scraper vs 🔍 AI Scout
 
@@ -4981,6 +5030,7 @@ Buzz gives you two powerful ways to discover leads:
 You can also import thousands of leads from Apollo.io or LinkedIn using **📥 Import CSV**!`;
   }
 
+  // 6. Visual Pitch Mockups
   if (q.includes("mockup") || q.includes("imagen") || q.includes("visual")) {
     return `### 🎨 Visual Pitch Mockups
 
@@ -4989,25 +5039,65 @@ Buzz generates custom branded before/after split screens, 30-sec video demo prev
 In **Draft & Send**, you can preview and download the mockup. In **⚡ Auto-Pilot**, mockups are automatically rendered and attached to every email!`;
   }
 
-  if (q.includes("setup") || q.includes("start") || q.includes("how to")) {
-    return `### 🚀 Quick Start Guide for Buzz
+  // 7. CRM, Deal Value & Revenue Tracking
+  if (q.includes("deal") || q.includes("revenue") || q.includes("crm") || q.includes("notes") || q.includes("won") || q.includes("track")) {
+    return `### 💵 Lightweight CRM & Revenue Tracking
 
-1. **Add Google Gemini API Key:** Open **Settings (⚙️)** and paste your free key from [Google AI Studio](https://aistudio.google.com/app/apikey).
-2. **Configure Email Dispatch:** Upload \`buzz-send.php\` to your cPanel or deploy the Google Apps Script webhook.
-3. **Get Leads:** Click **🕷️ Scrape Leads** or **📥 Import CSV**.
-4. **Launch Outreach:** Select your leads and click **⚡ Run Auto-Pilot Campaign**!
-
-To enable autonomous actions in this chat, please add your Gemini API Key in **Settings (⚙️)**.`;
+Buzz is also a pipeline tracker that monitors your sales progress:
+- **Deal Value ($):** Enter your contract or sale amount on any prospect (e.g. \`$3,500\`).
+- **Notes & Activity Log:** Keep call notes, objections, and next steps on each prospect card.
+- **Won ($) KPI Header:** The top **WON / PAID** KPI card automatically aggregates total closed revenue (e.g. \`1 ($3,500)\`).
+- **Quick Status Cycling:** Tap the status pill on any lead to cycle through *Pending ➔ Contacted ➔ Sample Sent ➔ Won*.`;
   }
 
-  return `I am **Buzz Copilot**! To enable full autonomous tool execution (scraping leads, running Auto-Pilot, updating settings directly from chat), please add your free **Google Gemini API Key** in **Settings (⚙️)**.
+  // 8. CSV Import & Export
+  if (q.includes("csv") || q.includes("export") || q.includes("import") || q.includes("excel") || q.includes("sheets")) {
+    return `### 📁 CSV Import & Export Capabilities
 
-In the meantime, feel free to ask me any questions about:
-- **cPanel PHP Bridge setup**
-- **Gmail Webhook deployment**
-- **Smart Cadence follow-up rules**
-- **In-browser lead scraping**
-- **Universal CSV importing & exporting**`;
+- **📤 1-Click CSV Export:** Tap **Export CSV** in the toolbar to export your entire pipeline or current filter (*Won*, *Follow-ups Due*, *Selected*) into an RFC 4180-compliant CSV with UTF-8 BOM, fully formatted for Microsoft Excel & Google Sheets.
+- **📥 Universal CSV Importer:** Drag and drop files from Apollo.io, LinkedIn Sales Navigator, ZoomInfo, or custom spreadsheets with automated column detection and duplicate email prevention.`;
+  }
+
+  // 9. Pricing, Costs & Architecture
+  if (q.includes("price") || q.includes("pricing") || q.includes("cost") || q.includes("free") || q.includes("subscription") || q.includes("monthly")) {
+    return `### 💰 100% Free & Zero Monthly Subscriptions
+
+Buzz has **no monthly SaaS fees, no user seats, and no recurring hosting bills**:
+- **Runs Locally:** Buzz is a Progressive Web App (PWA) that runs entirely inside your browser and stores data in your device's IndexedDB.
+- **Free AI Key:** Google Gemini API has a generous free tier (60 requests/minute) that costs $0.
+- **Free Email Bridges:** Uses your own cPanel hosting email or free Google Apps Script webhooks.`;
+  }
+
+  // 10. Privacy & Data Security
+  if (q.includes("privacy") || q.includes("security") || q.includes("safe") || q.includes("local") || q.includes("offline") || q.includes("data")) {
+    return `### 🔒 Privacy & Local-First Data Security
+
+All your prospect data, business profiles, and email templates are stored **locally on your device** inside browser **IndexedDB** storage.
+- **No Third-Party Tracking:** Buzz does not send your leads or contacts to any central database.
+- **Direct Dispatch:** When sending emails, the request goes directly to your own cPanel bridge or Google script.
+- **Complete Ownership:** You can backup and export your data at any time via **Export CSV** or **Settings (⚙️)**.`;
+  }
+
+  // 11. Quick Start / General Setup
+  if (q.includes("setup") || q.includes("start") || q.includes("how to") || q.includes("guide")) {
+    return `### 🚀 Quick Start Guide for Buzz
+
+1. **Plug-and-Play (Zero Setup):** Use **🕷️ Scrape Leads** to pull 25 local businesses, then click **"Draft & Send" ➔ "🚀 Launch Mail App"** to send with 1 click.
+2. **Add Free Gemini API Key (Optional):** Paste your key from [Google AI Studio](https://aistudio.google.com/app/apikey) **directly into this chat** to activate full Gemini 2.5 Flash reasoning and autonomous actions!
+3. **Configure Custom Domain Bridge (Optional):** Upload \`buzz-send.php\` to your cPanel for background sending from \`you@yourdomain.com\`.
+4. **Launch Outreach:** Select your leads and click **⚡ Run Auto-Pilot Campaign**!`;
+  }
+
+  return `I am **Buzz Copilot**! 
+
+💡 **Tip:** To activate full **Gemini 2.5 Flash** reasoning and autonomous actions (scraping leads, running Auto-Pilot, updating records directly from chat), you can **paste your free Google Gemini API key directly into this chat**!
+
+In the meantime, I have full offline knowledge of Buzz. You can ask me:
+- *"How can non-technical users set this up?"*
+- *"How does the cPanel email bridge work?"*
+- *"What is Smart Cadence?"*
+- *"How do I scrape leads without an API key?"*
+- *"How does deal tracking and CSV export work?"*`;
 }
 
 // Start
