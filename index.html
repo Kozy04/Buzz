@@ -15,7 +15,7 @@
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="./style.css?v=26">
+  <link rel="stylesheet" href="./style.css?v=27">
 </head>
 <body>
   <!-- App Container -->
@@ -557,6 +557,26 @@
             <div class="form-group" style="margin-bottom: 10px;">
               <label class="input-label" for="settingsDispatchSecret">Security Secret / Token (Optional)</label>
               <input type="text" id="settingsDispatchSecret" class="text-input" placeholder="Optional security key" />
+            </div>
+
+            <!-- cPanel Authenticated SMTP Credentials (Optional for Guaranteed Primary Inbox Placement) -->
+            <div id="cpanelSmtpCredentialsGroup" class="form-row" style="margin-bottom: 10px;">
+              <div class="form-group" style="flex: 2;">
+                <label class="input-label" for="settingsDispatchSmtpPass">
+                  cPanel Email Password <span style="color: var(--accent-cyan); font-weight: normal;">(Guaranteed Inbox)</span>
+                </label>
+                <input type="password" id="settingsDispatchSmtpPass" class="text-input" placeholder="cPanel mailbox password (Optional)" autocomplete="new-password" />
+                <span style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 3px;">
+                  Authenticates via SSL (Port 465) for full DKIM signing. Leave empty for standard mail().
+                </span>
+              </div>
+              <div class="form-group" style="flex: 1;">
+                <label class="input-label" for="settingsDispatchSmtpPort">SMTP Port</label>
+                <select id="settingsDispatchSmtpPort" class="text-input select-input" style="font-size: 12px; padding: 7px 10px;">
+                  <option value="465" selected>465 (SSL)</option>
+                  <option value="587">587 (TLS)</option>
+                </select>
+              </div>
             </div>
 
             <!-- Setup Guides Box with Copy & Download Actions -->
@@ -1470,7 +1490,7 @@
   </div>
 
   <!-- Scripts -->
-  <script src="./app.js?v=26"></script>
+  <script src="./app.js?v=27"></script>
   <script>
     // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {
